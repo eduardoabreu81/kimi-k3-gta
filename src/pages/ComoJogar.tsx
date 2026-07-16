@@ -56,10 +56,12 @@ function SplitChars({ text, attr }: { text: string; attr: string }) {
 function SplitWords({ text, attr }: { text: string; attr: string }) {
   return (
     <>
-      {text.split(' ').map((w, i) => (
-        <span key={i} {...{ [attr]: true }} className="inline-block will-change-transform">
-          {w}
-          {i < text.split(' ').length - 1 ? ' ' : ''}
+      {text.split(' ').map((w, i, arr) => (
+        <span key={i}>
+          <span {...{ [attr]: true }} className="inline-block will-change-transform">
+            {w}
+          </span>
+          {i < arr.length - 1 ? ' ' : null}
         </span>
       ))}
     </>
