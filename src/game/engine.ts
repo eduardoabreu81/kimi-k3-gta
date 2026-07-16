@@ -402,18 +402,12 @@ export const createGame: CreateGame = (opts) => {
       case 'KeyE':
         if (!e.repeat) actionEdge = true;
         break;
-      case 'KeyM':
-        if (!e.repeat) handle.toggleMute();
-        break;
-      case 'Escape':
+      // ESC/M/R são da UI React (Game.tsx) — engine NÃO os escuta (evita duplo-toggle).
       case 'KeyP':
         if (!e.repeat) {
           if (phase === 'playing') handle.pause();
           else if (phase === 'paused') handle.resume();
         }
-        break;
-      case 'KeyR':
-        if (!e.repeat && phase === 'gameover') handle.restart();
         break;
     }
   }

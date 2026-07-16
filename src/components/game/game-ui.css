@@ -12,215 +12,213 @@
     crosshair;
 }
 
-@layer components {
-  /* ---------- container fullscreen do jogo (game.md §1) --------------------- */
-  .game-root {
-    position: fixed;
-    inset: 0;
-    overflow: hidden;
-    overscroll-behavior: none;
-    touch-action: none;
-    background: #07030f;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
+/* ---------- container fullscreen do jogo (game.md §1) --------------------- */
+.game-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  background: #07030f;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
 
-  /* ---------- reflexo policial nas bordas (game.md §2.3) ------------------- */
-  /* wanted >= 3: bordas esquerda/direita pulsam vermelho/azul, 4 Hz, a .12 */
-  .gm-police-edges {
-    animation: gm-police-edges 250ms step-end infinite;
-  }
+/* ---------- reflexo policial nas bordas (game.md §2.3) ------------------- */
+/* wanted >= 3: bordas esquerda/direita pulsam vermelho/azul, 4 Hz, a .12 */
+.gm-police-edges {
+  animation: gm-police-edges 250ms step-end infinite;
+}
 
-  /* ---------- pulso dourado na borda superior ao ganhar estrela (§4.1) ----- */
-  .gm-gold-top {
-    animation: gm-gold-top 450ms ease-out both;
-  }
+/* ---------- pulso dourado na borda superior ao ganhar estrela (§4.1) ----- */
+.gm-gold-top {
+  animation: gm-gold-top 450ms ease-out both;
+}
 
-  /* ---------- vignette de dano < 25% vida (game.md §4.3) ------------------- */
-  .gm-damage-vignette {
-    background: radial-gradient(
-      ellipse at center,
-      transparent 42%,
-      rgba(255, 59, 59, 0.38) 100%
-    );
-    animation: gm-damage-pulse 600ms ease-in-out infinite;
-  }
+/* ---------- vignette de dano < 25% vida (game.md §4.3) ------------------- */
+.gm-damage-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 42%,
+    rgba(255, 59, 59, 0.38) 100%
+  );
+  animation: gm-damage-pulse 600ms ease-in-out infinite;
+}
 
-  /* ---------- barra de vida pulsando abaixo de 25% (game.md §4.3) ---------- */
-  .gm-health-pulse {
-    animation: gm-health-pulse 600ms ease-in-out infinite;
-  }
+/* ---------- barra de vida pulsando abaixo de 25% (game.md §4.3) ---------- */
+.gm-health-pulse {
+  animation: gm-health-pulse 600ms ease-in-out infinite;
+}
 
-  /* ---------- flash branco 150ms ao tomar dano (game.md §4.3) -------------- */
-  .gm-health-flash {
-    animation: gm-health-flash 150ms ease-out both;
-  }
+/* ---------- flash branco 150ms ao tomar dano (game.md §4.3) -------------- */
+.gm-health-flash {
+  animation: gm-health-flash 150ms ease-out both;
+}
 
-  /* ---------- micro-jitter do velocímetro > 140 km/h (game.md §4.3) -------- */
-  .gm-speed-jitter {
-    animation: gm-speed-jitter 50ms linear infinite;
-  }
+/* ---------- micro-jitter do velocímetro > 140 km/h (game.md §4.3) -------- */
+.gm-speed-jitter {
+  animation: gm-speed-jitter 50ms linear infinite;
+}
 
-  /* ---------- anel do minimapa pisca vermelho 3x ao ganhar estrela (§4.2) -- */
-  .gm-minimap-flash {
-    animation: gm-minimap-flash 400ms ease-in-out 3;
-  }
+/* ---------- anel do minimapa pisca vermelho 3x ao ganhar estrela (§4.2) -- */
+.gm-minimap-flash {
+  animation: gm-minimap-flash 400ms ease-in-out 3;
+}
 
-  /* ---------- título com glitch RGB (pause §6 / DETIDO §2) ------------------ */
-  .gm-glitch {
-    position: relative;
-  }
-  .gm-glitch::before,
-  .gm-glitch::after {
-    content: attr(data-text);
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    pointer-events: none;
-    background: none;
-    -webkit-text-stroke: 0 transparent;
-  }
-  .gm-glitch::before {
-    color: #ff2e88;
-  }
-  .gm-glitch::after {
-    color: #00e5c7;
-  }
-  /* idle: clones ±2px por 80ms a cada 3s */
-  .gm-glitch-idle::before {
-    animation: gm-glitch-a 3s step-end infinite;
-  }
-  .gm-glitch-idle::after {
-    animation: gm-glitch-b 3s step-end infinite;
-  }
-  /* impacto (slam do DETIDO): clones ±3px por 120ms após 400ms */
-  .gm-glitch-impact::before {
-    animation: gm-glitch-impact-a 120ms step-end 400ms both;
-  }
-  .gm-glitch-impact::after {
-    animation: gm-glitch-impact-b 120ms step-end 400ms both;
-  }
+/* ---------- título com glitch RGB (pause §6 / DETIDO §2) ------------------ */
+.gm-glitch {
+  position: relative;
+}
+.gm-glitch::before,
+.gm-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: none;
+  -webkit-text-stroke: 0 transparent;
+}
+.gm-glitch::before {
+  color: #ff2e88;
+}
+.gm-glitch::after {
+  color: #00e5c7;
+}
+/* idle: clones ±2px por 80ms a cada 3s */
+.gm-glitch-idle::before {
+  animation: gm-glitch-a 3s step-end infinite;
+}
+.gm-glitch-idle::after {
+  animation: gm-glitch-b 3s step-end infinite;
+}
+/* impacto (slam do DETIDO): clones ±3px por 120ms após 400ms */
+.gm-glitch-impact::before {
+  animation: gm-glitch-impact-a 120ms step-end 400ms both;
+}
+.gm-glitch-impact::after {
+  animation: gm-glitch-impact-b 120ms step-end 400ms both;
+}
 
-  /* ---------- DETIDO: fundo sirene alternando a 2 Hz (game-over.md §2) ----- */
-  .gm-busted-layer {
-    animation: gm-busted-swap 500ms step-end infinite;
-  }
-  .gm-busted-layer-inv {
-    animation: gm-busted-swap-inv 500ms step-end infinite;
-  }
-  .gm-busted-border {
-    animation: gm-busted-border 500ms step-end infinite;
-  }
-  /* variante estática para prefers-reduced-motion (game-over.md §6) */
-  .gm-busted-static {
-    display: none;
-    background: rgba(74, 26, 92, 0.5);
-  }
+/* ---------- DETIDO: fundo sirene alternando a 2 Hz (game-over.md §2) ----- */
+.gm-busted-layer {
+  animation: gm-busted-swap 500ms step-end infinite;
+}
+.gm-busted-layer-inv {
+  animation: gm-busted-swap-inv 500ms step-end infinite;
+}
+.gm-busted-border {
+  animation: gm-busted-border 500ms step-end infinite;
+}
+/* variante estática para prefers-reduced-motion (game-over.md §6) */
+.gm-busted-static {
+  display: none;
+  background: rgba(74, 26, 92, 0.5);
+}
 
-  /* ---------- SE DEU MAL: vignette contraindo (game-over.md §3) ------------ */
-  .gm-wasted-vignette {
-    background: radial-gradient(
-      ellipse at center,
-      transparent 26%,
-      rgba(255, 59, 59, 0.5) 100%
-    );
-    animation: gm-wasted-vignette 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  /* título pulsa sutil após o slam (scale 1↔1.015, 2s, começa após 450ms) */
-  .gm-wasted-pulse {
-    animation: gm-wasted-pulse 2s ease-in-out 450ms infinite;
-  }
+/* ---------- SE DEU MAL: vignette contraindo (game-over.md §3) ------------ */
+.gm-wasted-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 26%,
+    rgba(255, 59, 59, 0.5) 100%
+  );
+  animation: gm-wasted-vignette 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* título pulsa sutil após o slam (scale 1↔1.015, 2s, começa após 450ms) */
+.gm-wasted-pulse {
+  animation: gm-wasted-pulse 2s ease-in-out 450ms infinite;
+}
 
-  /* ---------- confete de estrelas do NOVO RECORDE (game-over.md §4) -------- */
-  .gm-confetti-star {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    pointer-events: none;
-    animation: gm-confetti 1.2s cubic-bezier(0.16, 0.6, 0.4, 1) both;
-    animation-delay: var(--delay, 0ms);
-  }
+/* ---------- confete de estrelas do NOVO RECORDE (game-over.md §4) -------- */
+.gm-confetti-star {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+  animation: gm-confetti 1.2s cubic-bezier(0.16, 0.6, 0.4, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
 
-  /* ---------- contagem regressiva 3-2-1 ao retomar (game.md §6) ------------ */
-  .gm-countdown-pop {
-    animation: gm-countdown-pop 190ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  }
+/* ---------- contagem regressiva 3-2-1 ao retomar (game.md §6) ------------ */
+.gm-countdown-pop {
+  animation: gm-countdown-pop 190ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
 
-  /* ---------- canvas dessatura no game over (game-over.md §1) -------------- */
-  .gm-canvas-over {
-    filter: grayscale(0.9) brightness(0.55);
-    transition: filter 800ms ease;
-  }
-  .gm-canvas-live {
-    filter: grayscale(0) brightness(1);
-    transition: filter 400ms ease;
-  }
+/* ---------- canvas dessatura no game over (game-over.md §1) -------------- */
+.gm-canvas-over {
+  filter: grayscale(0.9) brightness(0.55);
+  transition: filter 800ms ease;
+}
+.gm-canvas-live {
+  filter: grayscale(0) brightness(1);
+  transition: filter 400ms ease;
+}
 
-  /* ---------- botões ícone 40px do HUD (game.md §4.1) ----------------------- */
-  .gm-hud-icon-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: rgba(13, 6, 24, 0.7);
-    border: 1px solid #2a1548;
-    color: #c9b8e8;
-    transition:
-      box-shadow 200ms ease,
-      color 200ms ease,
-      border-color 200ms ease;
-    pointer-events: auto;
-  }
-  .gm-hud-icon-btn:hover {
-    color: #00e5c7;
-    border-color: rgba(0, 229, 199, 0.5);
-    box-shadow: 0 0 24px rgba(0, 229, 199, 0.4);
-  }
+/* ---------- botões ícone 40px do HUD (game.md §4.1) ----------------------- */
+.gm-hud-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(13, 6, 24, 0.7);
+  border: 1px solid #2a1548;
+  color: #c9b8e8;
+  transition:
+    box-shadow 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+  pointer-events: auto;
+}
+.gm-hud-icon-btn:hover {
+  color: #00e5c7;
+  border-color: rgba(0, 229, 199, 0.5);
+  box-shadow: 0 0 24px rgba(0, 229, 199, 0.4);
+}
 
-  /* ---------- pills do HUD (hint/toast) (game.md §4.4 / design.md §8.8) ---- */
-  .gm-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border-radius: 999px;
-    background: rgba(13, 6, 24, 0.85);
-    padding: 10px 16px;
-    font-family: 'Press Start 2P', 'Courier New', monospace;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #fff7f0;
-  }
-  .gm-pill-teal {
-    border: 1px solid rgba(0, 229, 199, 0.6);
-  }
-  .gm-pill-gold {
-    border: 1px solid rgba(255, 214, 10, 0.6);
-  }
+/* ---------- pills do HUD (hint/toast) (game.md §4.4 / design.md §8.8) ---- */
+.gm-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  background: rgba(13, 6, 24, 0.85);
+  padding: 10px 16px;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff7f0;
+}
+.gm-pill-teal {
+  border: 1px solid rgba(0, 229, 199, 0.6);
+}
+.gm-pill-gold {
+  border: 1px solid rgba(255, 214, 10, 0.6);
+}
 
-  /* ---------- joystick touch (game.md §8) ----------------------------------- */
-  .gm-joystick-base {
-    touch-action: none;
-    background: rgba(13, 6, 24, 0.5);
-    border: 1px solid rgba(0, 229, 199, 0.5);
-    border-radius: 999px;
-    position: relative;
-  }
-  .gm-joystick-thumb {
-    background-image: linear-gradient(135deg, #ff2e88 0%, #ff7a29 55%, #ffb347 100%);
-    border-radius: 999px;
-    box-shadow:
-      0 0 24px rgba(255, 46, 136, 0.45),
-      0 0 80px rgba(255, 46, 136, 0.18);
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
+/* ---------- joystick touch (game.md §8) ----------------------------------- */
+.gm-joystick-base {
+  touch-action: none;
+  background: rgba(13, 6, 24, 0.5);
+  border: 1px solid rgba(0, 229, 199, 0.5);
+  border-radius: 999px;
+  position: relative;
+}
+.gm-joystick-thumb {
+  background-image: linear-gradient(135deg, #ff2e88 0%, #ff7a29 55%, #ffb347 100%);
+  border-radius: 999px;
+  box-shadow:
+    0 0 24px rgba(255, 46, 136, 0.45),
+    0 0 80px rgba(255, 46, 136, 0.18);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 /* ============================================================================
@@ -492,11 +490,9 @@
 }
 
 /* ---------- glitch do DETIDO em vermelho/azul (game-over.md §2) ------------ */
-@layer components {
-  .gm-glitch-police::before {
-    color: #ff3b3b;
-  }
-  .gm-glitch-police::after {
-    color: #3b82ff;
-  }
+.gm-glitch-police::before {
+  color: #ff3b3b;
+}
+.gm-glitch-police::after {
+  color: #3b82ff;
 }
