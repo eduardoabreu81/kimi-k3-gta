@@ -73,6 +73,17 @@ export default function Footer() {
             {t.footer.credits}
           </span>
           <p className="text-base text-text-mid">{t.footer.madeBy}</p>
+          <a
+            href="https://www.kimi.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-fit items-center gap-2 rounded-full border border-violet-haze/70 bg-night-800/60 px-3 py-1.5 transition-colors hover:border-teal-neon/70"
+          >
+            <img src="./kimi-k.svg" alt="Kimi" className="h-4 w-4" />
+            <span className="font-pixel text-[9px] uppercase tracking-[0.08em] text-text-mid">
+              {t.footer.kimi}
+            </span>
+          </a>
           <p className="text-sm text-text-dim">
             {year} · {t.footer.community}
           </p>

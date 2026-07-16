@@ -10,6 +10,7 @@ import HUD from '@/components/game/HUD'
 import PauseMenu from '@/components/game/PauseMenu'
 import GameOverOverlay from '@/components/game/GameOverOverlay'
 import TouchControls from '@/components/game/TouchControls'
+import { RotateHint } from '@/components/game/RotateHint'
 import { useReducedMotionPref } from '@/components/game/hooks'
 import { cn } from '@/lib/utils'
 import '@/components/game/game-ui.css'
@@ -123,14 +124,10 @@ export default function Game() {
     document.addEventListener('gesturestart', preventGesture)
     document.addEventListener('gesturechange', preventGesture)
 
-    /* touchmove não-passivo na raiz do jogo (libera áreas [data-allow-scroll]) */
-    const root = rootRef.current
-    const preventTouchMove = (e: TouchEvent) => {
-      const t = e.target as HTMLElement | null
-      if (t && t.closest('[data-allow-scroll]')) return
-      e.preventDefault()
-    }
-    root?.addEventListener('touchmove', preventTouchMove, { passive: false })
+    /* Scroll/zoom bloqueados via CSS: .game-root { touch-action: none }.
+       NUNCA usar preventDefault em touchmove aqui — no Chrome Android isso
+       cancela o click sintético e mata TODOS os botões (pause, voltar, HUD).
+       Áreas roláveis usam [data-allow-scroll] { touch-action: pan-y }. */
 
     return () => {
       html.style.overflow = prev.htmlOverflow
@@ -138,7 +135,6 @@ export default function Game() {
       body.style.overscrollBehavior = prev.bodyOverscroll
       document.removeEventListener('gesturestart', preventGesture)
       document.removeEventListener('gesturechange', preventGesture)
-      root?.removeEventListener('touchmove', preventTouchMove)
     }
   }, [])
 
@@ -209,6 +205,14 @@ export default function Game() {
      O contrato GameHandle não expõe surrender(), então a UI monta o payload
      com o que enxerga (dinheiro/tempo/procurado máximo local). */
   const surrender = useCallback(() => {
+    // Caminho preferido: a ENGINE resolve (pausa áudio, stats reais, fase gameover)
+    if (handleRef.current?.surrender) {
+      handleRef.current.surrender()
+      return
+    }
+    // Fallback local: fabrica o payload E pausa a engine — senão o jogo
+    // (e o motor do áudio) continuam rodando atrás do overlay.
+    handleRef.current?.pause()
     const h = hudRef.current
     const timeSec = elapsedRef.current
     const money = h.money
@@ -329,6 +333,7 @@ export default function Game() {
       />
 
       {/* ---------------- controles touch (pointer: coarse) ----------------- */}
+      <RotateHint />
       {!overlayOpen && <TouchControls inVehicle={hud.inVehicle} onInput={onTouchInput} />}
 
       {/* ---------------- menu de pausa (ESC) -------------------------------- */}

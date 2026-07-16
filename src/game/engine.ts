@@ -80,6 +80,7 @@ const STRINGS = {
       surrounded: 'cercado pela polícia',
       explosion: 'explosão',
       crash: 'batida',
+      surrender: 'se entregou à polícia',
     },
   },
   en: {
@@ -100,6 +101,7 @@ const STRINGS = {
       surrounded: 'surrounded by the police',
       explosion: 'explosion',
       crash: 'crash',
+      surrender: 'surrendered to the police',
     },
   },
 } as const;
@@ -1433,6 +1435,12 @@ export const createGame: CreateGame = (opts) => {
       hud.paused = false;
       last = performance.now();
       pushHud(true);
+    },
+    surrender(): void {
+      // "Desistir da fuga": game over real (DETIDO) com stats da corrida —
+      // gameOver() já silencia o motor/sirene via audio.update(0, false, 0).
+      if (phase !== 'playing' && phase !== 'paused') return;
+      gameOver('busted', 'surrender');
     },
     toggleMute(): void {
       audio.ensure();

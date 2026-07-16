@@ -249,6 +249,18 @@ export default function PauseMenu({
             <p className="mt-5 text-center font-pixel text-[9px] uppercase tracking-[0.08em] text-text-dim">
               {t.game.pause.escContinue}
             </p>
+
+            <a
+              href="https://www.kimi.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 flex items-center justify-center gap-2 opacity-70 transition-opacity hover:opacity-100"
+            >
+              <img src="./kimi-k.svg" alt="Kimi" className="h-3.5 w-3.5" />
+              <span className="font-pixel text-[8px] uppercase tracking-[0.08em] text-text-dim">
+                {t.footer.kimi}
+              </span>
+            </a>
           </motion.div>
         </motion.div>
       )}

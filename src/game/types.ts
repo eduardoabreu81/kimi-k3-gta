@@ -54,6 +54,7 @@ export interface GameHandle {
   resume(): void;
   restart(): void;
   toggleMute(): void;
+  surrender?(): void;      // desiste da fuga → game over 'busted' com stats reais
   toggleCrt(): void;
   setTouchInput(t: TouchInput): void;
   /** troca o idioma das strings da engine (splash/toast/hint/cause) e re-emite o HudState atual */
