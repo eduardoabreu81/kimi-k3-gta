@@ -131,12 +131,12 @@ export function stepCar(car: Car, dt: number, ctl: CarControl): void {
   }
 
   // Esterço proporcional à velocidade (nada de girar parado; menos ágil a 190 km/h).
-  const range = clamp(Math.abs(fwd) / 120, 0, 1) * (1 - 0.42 * clamp(Math.abs(fwd) / CAR_MAX_SPEED, 0, 1));
-  car.angle += ctl.steer * 2.5 * range * (ctl.handbrake ? 1.45 : 1) * dt * (fwd >= 0 ? 1 : -1);
+  const range = clamp(Math.abs(fwd) / 70, 0, 1) * (1 - 0.32 * clamp(Math.abs(fwd) / CAR_MAX_SPEED, 0, 1));
+  car.angle += ctl.steer * 3.3 * range * (ctl.handbrake ? 1.45 : 1) * dt * (fwd >= 0 ? 1 : -1);
   car.steerVis = lerp(car.steerVis, ctl.steer, Math.min(1, dt * 10));
 
   // Grip lateral: normal 9.5/s · freio de mão 2.1/s (drift).
-  const grip = ctl.handbrake ? 2.1 : 9.5;
+  const grip = ctl.handbrake ? 2.1 : 11;
   lat *= Math.max(0, 1 - grip * dt);
 
   const c2 = Math.cos(car.angle);

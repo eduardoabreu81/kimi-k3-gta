@@ -154,7 +154,7 @@ export default function PauseMenu({
                 <button
                   type="button"
                   className="btn-secondary w-full"
-                  onClick={() => window.open('/como-jogar', '_blank', 'noopener')}
+                  onClick={() => window.open(`${import.meta.env.BASE_URL}#/como-jogar`, '_blank', 'noopener')}
                 >
                   Como Jogar
                 </button>

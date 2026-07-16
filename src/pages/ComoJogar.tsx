@@ -777,7 +777,7 @@ export default function ComoJogar() {
             className="relative rotate-2 rounded-2xl border border-violet-haze shadow-[0_0_40px_rgba(255,46,136,0.25),0_16px_48px_rgba(0,0,0,0.5)] transition-shadow duration-500 will-change-transform hover:shadow-[0_0_70px_rgba(255,46,136,0.45),0_16px_48px_rgba(0,0,0,0.5)]"
           >
             <img
-              src="/gameplay-mock.svg"
+              src="./gameplay-mock.svg"
               alt="Gameplay de GTA VI Mini: perseguição policial em um cruzamento à noite, visto de cima"
               loading="eager"
               className="aspect-video w-full rounded-2xl object-cover"

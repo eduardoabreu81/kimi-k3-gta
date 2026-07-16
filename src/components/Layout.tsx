@@ -5,7 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import { setLenis } from '@/lib/scroll'
+import { setLenis, getLenis } from '@/lib/scroll'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -37,8 +37,11 @@ export default function Layout() {
     }
   }, [])
 
-  // volta ao topo ao trocar de rota
+  // volta ao topo ao trocar de rota — Lenis-aware: window.scrollTo sozinho é
+  // sobrescrito pelo Lenis no frame seguinte (bug do "voltar ao início")
   useEffect(() => {
+    const lenis = getLenis()
+    if (lenis) lenis.scrollTo(0, { immediate: true })
     window.scrollTo(0, 0)
   }, [pathname])
 

@@ -647,7 +647,7 @@ export default function Home() {
         {/* 4. skyline */}
         <img
           ref={skylineRef}
-          src="/hero-skyline.svg"
+          src="./hero-skyline.svg"
           alt=""
           loading="eager"
           className="absolute bottom-0 left-0 w-full object-cover object-bottom"
@@ -655,19 +655,19 @@ export default function Home() {
         {/* 5. palmeiras */}
         <div ref={palmsRef} className="pointer-events-none absolute inset-0" aria-hidden="true">
           <img
-            src="/palm-silhouette.svg"
+            src="./palm-silhouette.svg"
             alt=""
             loading="eager"
             className="hero-palm absolute -bottom-4 left-[-40px] w-[300px] opacity-90 md:left-[2%] md:w-[420px]"
           />
           <img
-            src="/palm-silhouette.svg"
+            src="./palm-silhouette.svg"
             alt=""
             loading="eager"
             className="hero-palm absolute -bottom-4 right-[-60px] w-[340px] -scale-x-100 md:right-[1%] md:w-[520px]"
           />
           <img
-            src="/palm-silhouette.svg"
+            src="./palm-silhouette.svg"
             alt=""
             loading="eager"
             className="hero-palm absolute -bottom-2 left-[30%] hidden w-[220px] opacity-70 lg:block"
@@ -800,7 +800,7 @@ export default function Home() {
           >
             <img
               ref={mockImgRef}
-              src="/gameplay-mock.svg"
+              src="./gameplay-mock.svg"
               alt="Gameplay de GTA VI Mini: perseguição policial vista de cima em um cruzamento à noite"
               loading="lazy"
               className="aspect-video w-full object-cover will-change-transform"
@@ -961,7 +961,7 @@ export default function Home() {
       >
         <div className="grad-sunset-sky absolute inset-0" aria-hidden="true" />
         <img
-          src="/hero-skyline.svg"
+          src="./hero-skyline.svg"
           alt=""
           loading="lazy"
           className="absolute bottom-0 left-0 w-full object-cover object-bottom opacity-70"
