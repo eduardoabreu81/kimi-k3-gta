@@ -74,6 +74,7 @@ const STRINGS = {
     hintBrake: 'ESPAÇO — FREIO DE MÃO',
     hintSound: 'M — SOM',
     hintExit: 'E — SAIR DO CARRO',
+    tooFastExit: 'MUITO RÁPIDO — FREIA PRIMEIRO!',
     causes: {
       shot: 'alvejado pela polícia',
       surrounded: 'cercado pela polícia',
@@ -93,6 +94,7 @@ const STRINGS = {
     hintBrake: 'SPACE — HANDBRAKE',
     hintSound: 'M — SOUND',
     hintExit: 'E — EXIT CAR',
+    tooFastExit: 'TOO FAST — BRAKE FIRST!',
     causes: {
       shot: 'shot by the police',
       surrounded: 'surrounded by the police',
@@ -110,7 +112,7 @@ type SplashMsg =
   | { id: 'gotAway'; sub: string }
   | { id: 'stealCar' }
   | { id: 'lowHealth' };
-type ToastMsg = { id: 'flee' | 'outOfSight' | 'carStolen' };
+type ToastMsg = { id: 'flee' | 'outOfSight' | 'carStolen' | 'tooFastExit' };
 type HintMsg = 'hintSteal' | 'hintBrake' | 'hintSound' | 'hintExit';
 
 type Phase = 'playing' | 'paused' | 'gameover';
@@ -190,6 +192,9 @@ export const createGame: CreateGame = (opts) => {
   let cars: Car[] = [];
   let playerCar: Car | null = null;
   let nearCar: Car | null = null;
+  let lastFreeX = 0;
+  let lastFreeY = 0;
+  let stuckT = 0;
 
   let time = 0; // relógio de animações (congela no pause)
   let playTime = 0; // tempo da corrida
@@ -665,28 +670,35 @@ export const createGame: CreateGame = (opts) => {
   function exitCar(): void {
     if (!playerCar) return;
     const car = playerCar;
-    // Sai pela lateral livre (esquerda, senão direita, senão em cima).
-    const c = Math.cos(car.angle);
-    const s = Math.sin(car.angle);
-    const spots = [
-      [car.x + s * 30, car.y - c * 30],
-      [car.x - s * 30, car.y + c * 30],
-      [car.x, car.y - 34],
-    ];
-    for (const [sx, sy] of spots) {
-      if (!city.hitSolid(sx, sy)) {
+    // Spawn seguro: 8 pontos ao redor, testados como CÍRCULO r=7 (igual ao
+    // collision check do jogador) — evita nascer preso em parede/quina.
+    const free = (x: number, y: number): boolean =>
+      !city.hitSolid(x - 7, y - 7) && !city.hitSolid(x + 7, y - 7) &&
+      !city.hitSolid(x - 7, y + 7) && !city.hitSolid(x + 7, y + 7);
+    let placed = false;
+    for (let k = 0; k < 8 && !placed; k++) {
+      const a = car.angle + (k * Math.PI) / 4;
+      const sx = car.x + Math.cos(a) * 36;
+      const sy = car.y + Math.sin(a) * 36;
+      if (free(sx, sy)) {
         player.place(sx, sy);
-        break;
+        placed = true;
       }
     }
+    if (!placed) player.place(car.x, car.y); // centro: o carro estava ali, é livre
+    lastFreeX = player.x;
+    lastFreeY = player.y;
+    stuckT = 0;
     car.playerDriven = false;
-    car.parked = true;
-    car.vx = 0;
-    car.vy = 0;
+    // Estilo GTA: o carro CONTINUA ROLANDO (freio de mão puxa sozinho no
+    // loop de coasting, no update) — nada de carro fincado no lugar.
+    car.coasting = true;
+    car.parked = false;
     playerCar = null;
     hud.inVehicle = false;
     hud.speedKmh = 0;
     audio.tick();
+    peds.scareNear(car.x, car.y, 120);
     pushHud(true);
   }
 
@@ -736,6 +748,27 @@ export const createGame: CreateGame = (opts) => {
     for (const cop of police.cops) obstacles.push({ x: cop.car.x, y: cop.car.y });
     for (const ped of peds.peds) {
       if (ped.state !== 'down') obstacles.push({ x: ped.x, y: ped.y });
+    }
+    // Carros abandonados em movimento (saída em andamento): desaceleram
+    // forte com o "freio de mão puxado" até estacionarem.
+    for (const c of cars) {
+      if (!c.coasting) continue;
+      const sp = carSpeed(c);
+      if (sp < 20) {
+        c.coasting = false;
+        c.parked = true;
+        c.vx = 0;
+        c.vy = 0;
+        continue;
+      }
+      const drag = Math.max(0, 1 - 1.15 * dt);
+      c.vx *= drag;
+      c.vy *= drag;
+      const impact = moveCar(c, dt, city);
+      if (impact > 80) {
+        c.vx = 0;
+        c.vy = 0;
+      }
     }
     for (const c of cars) updateCiv(c, dt, obstacles);
     // Remove destroços antigos (guincho invisível, 20s) — timer em turnCd.
@@ -838,7 +871,26 @@ export const createGame: CreateGame = (opts) => {
   }
 
   function updateOnFoot(dt: number, inp: ReturnType<typeof input>): void {
+    const prevX = player.x;
+    const prevY = player.y;
     player.update(dt, inp, city);
+    // Recuperação anti-trava: com input de movimento mas sem sair do lugar
+    // por 1,25s (ex.: quina de parede), volta para a última posição livre.
+    const moved = Math.hypot(player.x - prevX, player.y - prevY);
+    const wantsMove = inp.up || inp.down || inp.left || inp.right;
+    if (moved > 0.5) {
+      lastFreeX = player.x;
+      lastFreeY = player.y;
+      stuckT = 0;
+    } else if (wantsMove) {
+      stuckT += dt;
+      if (stuckT > 1.25) {
+        player.place(lastFreeX, lastFreeY);
+        stuckT = 0;
+      }
+    } else {
+      stuckT = 0;
+    }
     // Carro roubável mais próximo (civis; viaturas ficam trancadas).
     nearCar = null;
     let best = 58 * 58;
@@ -894,8 +946,15 @@ export const createGame: CreateGame = (opts) => {
 
     handleCarCollisions(car);
 
-    // Sair do carro (somente quase parado — nada de saída a 180 km/h).
-    if (actionEdge && carSpeed(car) < 70) exitCar();
+    // Sair do carro: liberado até ~90 km/h (estilo GTA, o carro segue
+    // rolando); acima disso, avisa e nega — nada de pulo em alta velocidade.
+    if (actionEdge) {
+      if (carSpeed(car) < 300) exitCar();
+      else {
+        showToast({ id: 'tooFastExit' });
+        audio.tick();
+      }
+    }
   }
 
   /** Colisão do carro do jogador com prédios: dano, shake, faíscas e som. */

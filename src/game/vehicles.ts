@@ -37,6 +37,8 @@ export interface Car {
   color: string;
   health: number; // 0..100
   parked: boolean;
+  /** true após o jogador pular fora em movimento: rola até parar (freio de mão). */
+  coasting?: boolean;
   stolen: boolean; // já foi roubado antes (crime não repete)
   playerDriven: boolean;
   wrecked: boolean;
@@ -203,7 +205,7 @@ export interface Obstacle {
  * vira em cruzamentos com 30% de chance e faz conversão suave de ângulo.
  */
 export function updateCiv(car: Car, dt: number, obstacles: Obstacle[]): void {
-  if (car.parked || car.playerDriven || car.wrecked) return;
+  if (car.parked || car.playerDriven || car.wrecked || car.coasting) return;
   car.turnCd -= dt;
   car.brakeT = Math.max(0, car.brakeT - dt);
   car.honkT = Math.max(0, car.honkT - dt);
