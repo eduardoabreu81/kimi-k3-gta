@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { TouchInput } from '@/game/types'
+import { useLang } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { useCoarsePointer } from './hooks'
 
@@ -33,6 +34,7 @@ function vibrate(ms: number) {
 }
 
 export default function TouchControls({ inVehicle, onInput }: TouchControlsProps) {
+  const { t } = useLang()
   const coarse = useCoarsePointer()
 
   /* estado mesclado de todos os ponteiros (joystick + botões) */
@@ -90,7 +92,7 @@ export default function TouchControls({ inVehicle, onInput }: TouchControlsProps
       <div
         ref={baseRef}
         role="application"
-        aria-label="Joystick virtual: arraste para mover ou dirigir"
+        aria-label={t.game.touch.joystickAria}
         className="gm-joystick-base fixed left-3 z-20"
         style={{
           width: BASE,
@@ -139,7 +141,7 @@ export default function TouchControls({ inVehicle, onInput }: TouchControlsProps
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.15 }}
-              aria-label="Freio de mão"
+              aria-label={t.game.touch.brakeAria}
               className={cn(
                 'flex items-center justify-center rounded-full border border-teal-neon font-pixel text-[9px] uppercase tracking-[0.08em] text-teal-neon',
                 'bg-transparent active:scale-95 active:bg-[rgba(0,229,199,.12)]',
@@ -154,14 +156,14 @@ export default function TouchControls({ inVehicle, onInput }: TouchControlsProps
               onLostPointerCapture={() => press('brake', false)}
               onContextMenu={(e) => e.preventDefault()}
             >
-              FREIO
+              {t.game.touch.brake}
             </motion.button>
           )}
         </AnimatePresence>
 
         <button
           type="button"
-          aria-label={inVehicle ? 'Sair do carro' : 'Entrar no carro'}
+          aria-label={inVehicle ? t.game.touch.exitCarAria : t.game.touch.enterCarAria}
           className="grad-vice flex flex-col items-center justify-center rounded-full font-pixel text-night-950 shadow-[0_0_24px_rgba(255,46,136,.45),0_0_80px_rgba(255,46,136,.18)] active:scale-95"
           style={{ width: 72, height: 72, touchAction: 'none' }}
           onPointerDown={(e) => {
@@ -175,7 +177,7 @@ export default function TouchControls({ inVehicle, onInput }: TouchControlsProps
         >
           <span className="text-base leading-none">E</span>
           <span className="mt-1 text-[7px] uppercase tracking-[0.08em]">
-            {inVehicle ? 'SAIR' : 'ENTRAR'}
+            {inVehicle ? t.game.touch.exit : t.game.touch.enter}
           </span>
         </button>
       </div>

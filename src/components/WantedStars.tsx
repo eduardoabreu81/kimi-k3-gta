@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLang } from '@/i18n'
 import { cn } from '@/lib/utils'
 
 export const STAR_PATH =
@@ -34,6 +35,7 @@ export default function WantedStars({
   onLevelChange,
   className,
 }: WantedStarsProps) {
+  const { t } = useLang()
   const clamped = Math.max(0, Math.min(5, Math.round(level)))
   // estrelas que devem rodar o "pop" (entrada inicial + estrelas recém-ganhas)
   const [pops, setPops] = useState<number[]>(() =>
@@ -113,7 +115,7 @@ export default function WantedStars({
       <button
         key={i}
         type="button"
-        aria-label={`Nível de procurado ${i + 1}`}
+        aria-label={t.game.stars.level(i + 1)}
         aria-pressed={filled}
         className="inline-flex shrink-0 cursor-pointer rounded-sm transition-transform duration-150 hover:scale-110"
         onMouseEnter={() => onLevelChange?.(i + 1)}
@@ -128,7 +130,7 @@ export default function WantedStars({
   return (
     <div
       role={interactive ? 'group' : 'img'}
-      aria-label={`Nível de procurado: ${clamped} de 5 estrelas`}
+      aria-label={t.game.stars.group(clamped)}
       className={cn('inline-flex items-center gap-1.5', className)}
       onKeyDown={handleKeyDown}
     >

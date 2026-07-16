@@ -58,6 +58,61 @@ const BEST_MONEY_KEY = 'gtamini.recorde.dinheiro';
 const BEST_TIME_KEY = 'gtamini.recorde.tempo';
 const CRT_KEY = 'gtamini.crt';
 
+// ── i18n da engine (todas as strings visíveis vivem aqui, nos 2 idiomas) ────
+type EngineLang = 'pt' | 'en';
+
+const STRINGS = {
+  pt: {
+    wanted: 'PROCURADO', // splash: `PROCURADO ★★★`
+    gotAway: 'DESPISTOU A POLÍCIA',
+    stealCar: 'ROUBE UM CARRO (E)',
+    lowHealth: 'SAÚDE BAIXA',
+    flee: 'FUJA DA POLÍCIA',
+    outOfSight: 'FORA DE VISTA…',
+    carStolen: 'CARRO ROUBADO',
+    hintSteal: 'Aperte E para roubar o carro',
+    hintBrake: 'ESPAÇO — FREIO DE MÃO',
+    hintSound: 'M — SOM',
+    hintExit: 'E — SAIR DO CARRO',
+    causes: {
+      shot: 'alvejado pela polícia',
+      surrounded: 'cercado pela polícia',
+      explosion: 'explosão',
+      crash: 'batida',
+    },
+  },
+  en: {
+    wanted: 'WANTED', // splash: `WANTED ★★★`
+    gotAway: 'YOU GOT AWAY',
+    stealCar: 'STEAL A CAR (E)',
+    lowHealth: 'LOW HEALTH',
+    flee: 'RUN FROM THE COPS',
+    outOfSight: 'OUT OF SIGHT…',
+    carStolen: 'CAR STOLEN',
+    hintSteal: 'Press E to steal the car',
+    hintBrake: 'SPACE — HANDBRAKE',
+    hintSound: 'M — SOUND',
+    hintExit: 'E — EXIT CAR',
+    causes: {
+      shot: 'shot by the police',
+      surrounded: 'surrounded by the police',
+      explosion: 'explosion',
+      crash: 'crash',
+    },
+  },
+} as const;
+
+type CauseId = keyof (typeof STRINGS)['pt']['causes'];
+
+/** Mensagens de HUD "com chave" — permitem re-traduzir o que está visível. */
+type SplashMsg =
+  | { id: 'wanted'; stars: number }
+  | { id: 'gotAway'; sub: string }
+  | { id: 'stealCar' }
+  | { id: 'lowHealth' };
+type ToastMsg = { id: 'flee' | 'outOfSight' | 'carStolen' };
+type HintMsg = 'hintSteal' | 'hintBrake' | 'hintSound' | 'hintExit';
+
 type Phase = 'playing' | 'paused' | 'gameover';
 
 interface Pickup {
@@ -192,6 +247,27 @@ export const createGame: CreateGame = (opts) => {
   let splashT = 0;
   let toastT = 0;
 
+  // ── Idioma ativo da engine + mensagens visíveis (para re-emissão) ─────────
+  let lang: EngineLang = 'pt';
+  let S: (typeof STRINGS)[EngineLang] = STRINGS[lang];
+  let splashMsg: SplashMsg | null = null;
+  let toastMsg: ToastMsg | null = null;
+  let hintMsg: HintMsg | null = null;
+  let gameOverCause: CauseId | null = null;
+
+  function renderSplash(m: SplashMsg): { text: string; sub?: string } {
+    switch (m.id) {
+      case 'wanted':
+        return { text: `${S.wanted} ${'★'.repeat(m.stars)}` };
+      case 'gotAway':
+        return { text: S.gotAway, sub: m.sub };
+      case 'stealCar':
+        return { text: S.stealCar };
+      case 'lowHealth':
+        return { text: S.lowHealth };
+    }
+  }
+
   function pushHud(force = false): void {
     if (force) hudForce = true;
   }
@@ -214,14 +290,17 @@ export const createGame: CreateGame = (opts) => {
     hudForce = false;
   }
 
-  function showSplash(text: string, sub?: string, dur = 1.9): void {
-    hud.splash = { text, sub };
+  function showSplash(msg: SplashMsg, dur = 1.9): void {
+    splashMsg = msg;
+    const r = renderSplash(msg);
+    hud.splash = { text: r.text, sub: r.sub };
     splashT = dur;
     pushHud(true);
   }
 
-  function showToast(text: string, dur = 2.4): void {
-    hud.toast = text;
+  function showToast(msg: ToastMsg, dur = 2.4): void {
+    toastMsg = msg;
+    hud.toast = S[msg.id];
     toastT = dur;
     pushHud(true);
   }
@@ -230,18 +309,18 @@ export const createGame: CreateGame = (opts) => {
   const wanted = new WantedSystem({
     onLevelUp: (lvl) => {
       maxWanted = Math.max(maxWanted, lvl);
-      showSplash(`PROCURADO ${'★'.repeat(lvl)}`);
+      showSplash({ id: 'wanted', stars: lvl });
       audio.starUp();
       ringFlash = 1.2;
-      if (lvl === 1) showToast('FUJA DA POLÍCIA', 3);
+      if (lvl === 1) showToast({ id: 'flee' }, 3);
     },
     onEvadeStart: () => {
-      showToast('FORA DE VISTA…');
+      showToast({ id: 'outOfSight' });
     },
     onCleared: (clearedLevel) => {
       const reward = clearedLevel * EVADE_REWARD_PER_STAR;
       addMoney(reward, px(), py());
-      showSplash('DESPISTOU A POLÍCIA', `+R$ ${reward}`);
+      showSplash({ id: 'gotAway', sub: `+R$ ${reward}` });
       audio.starDown();
     },
   });
@@ -335,7 +414,11 @@ export const createGame: CreateGame = (opts) => {
     hud.hint = null;
     hud.gameOver = null;
     hud.paused = false;
-    showSplash('ROUBE UM CARRO (E)', undefined, 3);
+    splashMsg = null;
+    toastMsg = null;
+    hintMsg = null;
+    gameOverCause = null;
+    showSplash({ id: 'stealCar' }, 3);
     pushHud(true);
   }
 
@@ -547,14 +630,14 @@ export const createGame: CreateGame = (opts) => {
   }
 
   // ── Dano ao jogador ────────────────────────────────────────────────────────
-  function damagePlayer(amount: number, cause: string): void {
+  function damagePlayer(amount: number, cause: CauseId): void {
     if (phase !== 'playing') return;
     health = Math.max(0, health - amount);
     hud.health = Math.round(health);
     redFlash = Math.max(redFlash, 0.18);
     if (health < 25 && !lowHealthWarned && health > 0) {
       lowHealthWarned = true;
-      showSplash('SAÚDE BAIXA');
+      showSplash({ id: 'lowHealth' });
     }
     if (health >= 25) lowHealthWarned = false;
     if (health <= 0) gameOver('wasted', cause);
@@ -573,7 +656,7 @@ export const createGame: CreateGame = (opts) => {
       car.stolen = true;
       carsStolen++;
       crime(1, 'carro');
-      showToast('CARRO ROUBADO');
+      showToast({ id: 'carStolen' });
       peds.scareNear(car.x, car.y, 170);
     }
     pushHud(true);
@@ -608,7 +691,7 @@ export const createGame: CreateGame = (opts) => {
   }
 
   // ── Game over ──────────────────────────────────────────────────────────────
-  function gameOver(kind: 'busted' | 'wasted', cause: string): void {
+  function gameOver(kind: 'busted' | 'wasted', causeId: CauseId): void {
     if (phase === 'gameover') return;
     phase = 'gameover';
     const stats: RunStats = {
@@ -628,9 +711,11 @@ export const createGame: CreateGame = (opts) => {
     // gravados no primeiro game over, depois só quando superados.
     if (moneyEarned >= storageGetInt(BEST_MONEY_KEY, 0)) storageSet(BEST_MONEY_KEY, String(moneyEarned));
     if (stats.timeSec >= storageGetInt(BEST_TIME_KEY, 0)) storageSet(BEST_TIME_KEY, String(stats.timeSec));
-    const payload: GameOverPayload = { kind, cause, stats, best, isRecord };
+    gameOverCause = causeId;
+    const payload: GameOverPayload = { kind, cause: S.causes[causeId], stats, best, isRecord };
     hud.gameOver = payload;
     hud.hint = null;
+    hintMsg = null;
     if (kind === 'wasted') audio.explosion();
     else audio.busted();
     audio.update(0, false, 0);
@@ -693,14 +778,14 @@ export const createGame: CreateGame = (opts) => {
             playerCar.health -= 5;
             spawnSparks(px(), py(), 4);
           } else {
-            damagePlayer(rand(4, 7), 'alvejado pela polícia');
+            damagePlayer(rand(4, 7), 'shot');
             spawnSparks(px(), py(), 3);
           }
         }
       },
     });
     if (police.checkBusted(dt, px(), py(), playerSpeedPx(), !!playerCar, wanted.level)) {
-      gameOver('busted', 'cercado pela polícia');
+      gameOver('busted', 'surrounded');
     }
 
     // Pedestres + sustos perto de carro rápido.
@@ -795,7 +880,7 @@ export const createGame: CreateGame = (opts) => {
     if (car.health <= 0) {
       spawnExplosion(car.x, car.y);
       shake(10);
-      gameOver('wasted', 'explosão');
+      gameOver('wasted', 'explosion');
       return;
     }
 
@@ -821,7 +906,7 @@ export const createGame: CreateGame = (opts) => {
       shake(clamp(impact / 55, 2, 10));
       spawnSparks(car.x, car.y, Math.round(clamp(impact / 40, 4, 14)));
       if (impact > 260) {
-        damagePlayer((impact - 260) / 22, 'batida');
+        damagePlayer((impact - 260) / 22, 'crash');
         whiteFlash = Math.max(whiteFlash, 0.08);
       }
       peds.scareNear(car.x, car.y, 170);
@@ -871,7 +956,7 @@ export const createGame: CreateGame = (opts) => {
       shake(clamp(impact / 60, 2, 10));
       spawnSparks((car.x + o.x) / 2, (car.y + o.y) / 2, 8);
       peds.scareNear(car.x, car.y, 180);
-      if (impact > 250) damagePlayer((impact - 250) / 26, 'batida');
+      if (impact > 250) damagePlayer((impact - 250) / 26, 'crash');
       if (o.kind === 'cop') {
         // Bater em viatura é crime (com cooldown para não farmar estrelas).
         if (impact > 130 && ramCd <= 0) {
@@ -921,6 +1006,7 @@ export const createGame: CreateGame = (opts) => {
       splashT -= dt;
       if (splashT <= 0) {
         hud.splash = null;
+        splashMsg = null;
         pushHud(true);
       }
     }
@@ -928,21 +1014,23 @@ export const createGame: CreateGame = (opts) => {
       toastT -= dt;
       if (toastT <= 0) {
         hud.toast = null;
+        toastMsg = null;
         pushHud(true);
       }
     }
 
     // Dica contextual (game.md §4.4).
-    let hint: string | null = null;
-    if (!playerCar && nearCar) hint = 'Aperte E para roubar o carro';
-    else if (playerCar && playTime - drivingSince < 5) hint = 'ESPAÇO — FREIO DE MÃO';
+    let hint: HintMsg | null = null;
+    if (!playerCar && nearCar) hint = 'hintSteal';
+    else if (playerCar && playTime - drivingSince < 5) hint = 'hintBrake';
     else if (mHintDone === false && playTime > 10) {
-      hint = 'M — SOM';
+      hint = 'hintSound';
       mHintT += dt;
       if (mHintT > 3) mHintDone = true;
-    } else if (playerCar && carSpeed(playerCar) < 40) hint = 'E — SAIR DO CARRO';
-    if (hint !== hud.hint) {
-      hud.hint = hint;
+    } else if (playerCar && carSpeed(playerCar) < 40) hint = 'hintExit';
+    if (hint !== hintMsg) {
+      hintMsg = hint;
+      hud.hint = hint ? S[hint] : null;
       pushHud(true);
     }
 
@@ -1267,6 +1355,7 @@ export const createGame: CreateGame = (opts) => {
       phase = 'paused';
       hud.paused = true;
       hud.hint = null;
+      hintMsg = null;
       audio.update(0, false, 0);
       pushHud(true);
     },
@@ -1296,6 +1385,22 @@ export const createGame: CreateGame = (opts) => {
     toggleCrt(): void {
       hud.crt = !hud.crt;
       storageSet(CRT_KEY, hud.crt ? '1' : '0');
+      pushHud(true);
+    },
+    setLanguage(next: 'pt' | 'en'): void {
+      if (next === lang) return;
+      lang = next;
+      S = STRINGS[lang];
+      // Re-emite o que estiver visível já traduzido (splash/toast/hint/cause).
+      if (splashMsg) {
+        const r = renderSplash(splashMsg);
+        hud.splash = { text: r.text, sub: r.sub };
+      }
+      if (toastMsg) hud.toast = S[toastMsg.id];
+      if (hintMsg) hud.hint = S[hintMsg];
+      if (hud.gameOver && gameOverCause) {
+        hud.gameOver = { ...hud.gameOver, cause: S.causes[gameOverCause] };
+      }
       pushHud(true);
     },
     setTouchInput(t: TouchInput): void {

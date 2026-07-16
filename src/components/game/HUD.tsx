@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Pause, Volume2, VolumeX } from 'lucide-react'
 import WantedStars from '@/components/WantedStars'
 import type { HudState } from '@/game/types'
+import { useLang } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { formatClock, useRolledNumber } from './hooks'
 
@@ -40,18 +41,22 @@ function enter(entered: boolean, delay: number, from: { x?: number; y?: number; 
   } as const
 }
 
-/** cor/variante do splash central (§4.5) — inferida do texto enviado pela engine */
+/** cor/variante do splash central (§4.5) — inferida do texto enviado pela engine
+    (prefixos PT + EN: a engine pode trocar de idioma no meio da partida) */
 function splashClasses(text: string): string {
   const t = text.toUpperCase()
-  if (t.startsWith('DESPISTOU')) return 'text-teal-neon'
-  if (t.includes('SAÚDE')) return 'text-police-red'
+  if (t.startsWith('DESPISTOU') || t.startsWith('YOU GOT AWAY') || t.startsWith('GOT AWAY'))
+    return 'text-teal-neon'
+  if (t.includes('SAÚDE') || t.includes('HEALTH')) return 'text-police-red'
   return 'grad-text-vice'
 }
 
 function splashGlow(text: string): string {
   const t = text.toUpperCase()
-  if (t.startsWith('DESPISTOU')) return '0 0 24px rgba(0,229,199,.55), 0 0 64px rgba(0,229,199,.25)'
-  if (t.includes('SAÚDE')) return '0 0 24px rgba(255,59,59,.55), 0 0 64px rgba(255,59,59,.25)'
+  if (t.startsWith('DESPISTOU') || t.startsWith('YOU GOT AWAY') || t.startsWith('GOT AWAY'))
+    return '0 0 24px rgba(0,229,199,.55), 0 0 64px rgba(0,229,199,.25)'
+  if (t.includes('SAÚDE') || t.includes('HEALTH'))
+    return '0 0 24px rgba(255,59,59,.55), 0 0 64px rgba(255,59,59,.25)'
   return '0 0 24px rgba(255,46,136,.55), 0 0 64px rgba(255,46,136,.25)'
 }
 
@@ -63,6 +68,8 @@ export default function HUD({
   onPauseClick,
   onMuteClick,
 }: HUDProps) {
+  const { t } = useLang()
+
   /* dinheiro estilo odômetro (§4.1: rola 300ms ao ganhar) */
   const money = useRolledNumber(hud.money)
 
@@ -110,24 +117,23 @@ export default function HUD({
   /* aria-live throttled 1s (game.md §9): leitores de tela acompanham o HUD */
   const hudRef = useRef(hud)
   const elapsedRef = useRef(elapsedSec)
+  const tRef = useRef(t)
   useEffect(() => {
     hudRef.current = hud
     elapsedRef.current = elapsedSec
+    tRef.current = t
   })
   const [announce, setAnnounce] = useState('')
   useEffect(() => {
     const id = window.setInterval(() => {
       const h = hudRef.current
+      const d = tRef.current.game.hud
       const partes = [
-        `Vida ${Math.round(h.health)} por cento.`,
-        `Dinheiro R$ ${Math.round(h.money).toLocaleString('pt-BR')}.`,
-        h.wanted > 0
-          ? `Procurado: ${h.wanted} de 5 estrelas${h.evading ? ', despistando' : ''}.`
-          : 'Sem nível de procurado.',
-        h.inVehicle
-          ? `Velocidade ${Math.round(h.speedKmh)} quilômetros por hora.`
-          : 'A pé.',
-        `Tempo ${formatClock(elapsedRef.current)}.`,
+        d.srHealth(Math.round(h.health)),
+        d.srMoney(Math.round(h.money).toLocaleString(tRef.current.locale)),
+        h.wanted > 0 ? d.srWanted(h.wanted, h.evading) : d.srNoWanted,
+        h.inVehicle ? d.srSpeed(Math.round(h.speedKmh)) : d.srOnFoot,
+        d.srTime(formatClock(elapsedRef.current)),
       ]
       setAnnounce(partes.join(' '))
     }, 1000)
@@ -154,7 +160,7 @@ export default function HUD({
             className="font-sans text-2xl font-bold tabular-nums text-cash-green"
             style={{ textShadow: '0 0 12px rgba(124,255,107,.4)' }}
           >
-            {Math.round(money).toLocaleString('pt-BR')}
+            {Math.round(money).toLocaleString(t.locale)}
           </span>
         </motion.div>
 
@@ -164,14 +170,14 @@ export default function HUD({
           className="absolute left-1/2 flex -translate-x-1/2 flex-col items-center gap-1"
         >
           <span className="font-pixel text-[9px] uppercase tracking-[0.08em] text-text-dim">
-            Procurado
+            {t.game.hud.wanted}
           </span>
           <div className={cn(hud.wanted === 0 && !hud.evading && 'opacity-25')}>
             <WantedStars level={hud.wanted} size={28} evading={hud.evading} />
           </div>
           {/* tempo no mobile: top-center abaixo das estrelas (§8) */}
           <div className="mt-1 flex items-center gap-1.5 lg:hidden">
-            <span className="font-pixel text-[8px] text-text-dim">TEMPO</span>
+            <span className="font-pixel text-[8px] text-text-dim">{t.game.hud.time}</span>
             <span className="font-sans text-sm font-bold tabular-nums text-text-hi">
               {formatClock(elapsedSec)}
             </span>
@@ -184,19 +190,24 @@ export default function HUD({
           className="pointer-events-auto flex items-center gap-2"
         >
           <div className="mr-1 hidden items-baseline gap-2 lg:flex">
-            <span className="font-pixel text-[9px] text-text-dim">TEMPO</span>
+            <span className="font-pixel text-[9px] text-text-dim">{t.game.hud.time}</span>
             <span className="font-sans text-xl font-bold tabular-nums text-text-hi">
               {formatClock(elapsedSec)}
             </span>
           </div>
-          <button type="button" className="gm-hud-icon-btn" onClick={onPauseClick} aria-label="Pausar jogo (Esc)">
+          <button
+            type="button"
+            className="gm-hud-icon-btn"
+            onClick={onPauseClick}
+            aria-label={t.game.hud.pauseAria}
+          >
             <Pause size={18} aria-hidden="true" />
           </button>
           <button
             type="button"
             className="gm-hud-icon-btn"
             onClick={onMuteClick}
-            aria-label={hud.muted ? 'Ativar som (M)' : 'Silenciar (M)'}
+            aria-label={hud.muted ? t.game.hud.unmuteAria : t.game.hud.muteAria}
             aria-pressed={hud.muted}
           >
             {hud.muted ? (
@@ -225,7 +236,7 @@ export default function HUD({
               width={180}
               height={180}
               className="block h-[120px] w-[120px] lg:h-[180px] lg:w-[180px]"
-              aria-label="Minimapa da cidade"
+              aria-label={t.game.hud.minimapAria}
             />
           </div>
         </div>
@@ -266,18 +277,18 @@ export default function HUD({
               transition={{ duration: 0.2 }}
               className="font-pixel text-[10px] uppercase tracking-[0.08em] text-teal-neon"
             >
-              A PÉ
+              {t.game.hud.onFoot}
             </motion.span>
           )}
         </AnimatePresence>
 
         <div className="mt-1 flex flex-col items-end gap-1">
-          <span className="font-pixel text-[9px] text-text-dim">VIDA</span>
+          <span className="font-pixel text-[9px] text-text-dim">{t.game.hud.health}</span>
           <div
             className="relative h-2.5 w-40 overflow-hidden rounded-full"
             style={{ background: 'rgba(201,184,232,.15)' }}
             role="progressbar"
-            aria-label="Vida"
+            aria-label={t.game.hud.healthBarAria}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(healthPct)}

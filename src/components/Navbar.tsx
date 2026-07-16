@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router'
 import { AnimatePresence, motion } from 'framer-motion'
+import LangToggle from '@/components/LangToggle'
+import { useLang } from '@/i18n'
 import { cn } from '@/lib/utils'
-
-const LINKS = [
-  { to: '/', label: 'Início', end: true },
-  { to: '/como-jogar', label: 'Como Jogar', end: false },
-]
 
 /**
  * Navbar — design.md §8.1
@@ -16,8 +13,14 @@ const LINKS = [
  * stagger 0.07s — Framer Motion, isolado neste componente).
  */
 export default function Navbar() {
+  const { t } = useLang()
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+
+  const LINKS = [
+    { to: '/', label: t.nav.home, end: true },
+    { to: '/como-jogar', label: t.nav.howTo, end: false },
+  ]
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40)
@@ -43,12 +46,12 @@ export default function Navbar() {
       >
         <nav className="container-site flex h-16 items-center justify-between gap-4">
           {/* logo */}
-          <Link to="/" className="flex items-center gap-3" aria-label="GTA VI Mini — Início">
+          <Link to="/" className="flex items-center gap-3" aria-label={t.nav.logoAria}>
             <span className="font-display text-2xl uppercase leading-none tracking-[0.01em]">
               <span className="text-text-hi">GTA VI </span>
               <span className="grad-text-vice">MINI</span>
             </span>
-            <span className="chip-pixel hidden lg:inline-flex">EDIÇÃO DE FÃ</span>
+            <span className="chip-pixel hidden lg:inline-flex">{t.nav.fanEdition}</span>
           </Link>
 
           {/* links desktop */}
@@ -65,15 +68,16 @@ export default function Navbar() {
                 {l.label}
               </NavLink>
             ))}
+            <LangToggle />
             <Link to="/jogar" className="btn-primary btn-cta px-6 py-2.5 text-sm">
-              Jogar Agora
+              {t.nav.playNow}
             </Link>
           </div>
 
           {/* hambúrguer mobile */}
           <button
             type="button"
-            aria-label={open ? 'Fechar menu' : 'Abrir menu'}
+            aria-label={open ? t.nav.closeMenu : t.nav.openMenu}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
             className="flex h-11 w-11 flex-col items-center justify-center gap-1.5 rounded-lg border border-[rgba(201,184,232,0.25)] bg-night-800 md:hidden"
@@ -113,7 +117,7 @@ export default function Navbar() {
               </span>
               <button
                 type="button"
-                aria-label="Fechar menu"
+                aria-label={t.nav.closeMenu}
                 onClick={() => setOpen(false)}
                 className="flex h-11 w-11 items-center justify-center rounded-lg border border-[rgba(201,184,232,0.25)] bg-night-800 text-2xl text-text-hi"
               >
@@ -126,7 +130,7 @@ export default function Navbar() {
               animate="show"
               variants={{ show: { transition: { staggerChildren: 0.07 } } }}
             >
-              {[...LINKS, { to: '/jogar', label: 'Jogar Agora', end: false }].map((l) => (
+              {[...LINKS, { to: '/jogar', label: t.nav.playNow, end: false }].map((l) => (
                 <motion.div
                   key={l.to}
                   variants={{
@@ -146,6 +150,15 @@ export default function Navbar() {
                   </Link>
                 </motion.div>
               ))}
+              <motion.div
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: { opacity: 1, transition: { duration: 0.4 } },
+                }}
+                className="mt-2"
+              >
+                <LangToggle />
+              </motion.div>
               <motion.p
                 variants={{
                   hidden: { opacity: 0 },
@@ -153,7 +166,7 @@ export default function Navbar() {
                 }}
                 className="mt-6 font-pixel text-[10px] uppercase tracking-[0.08em] text-text-dim"
               >
-                Paródia não-oficial · sem fins lucrativos
+                {t.nav.drawerNote}
               </motion.p>
             </motion.nav>
           </motion.div>

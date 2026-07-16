@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 // esperado.
 import { createGame } from '@/game/engine'
 import type { GameHandle, GameOverPayload, HudState } from '@/game/types'
+import { useLang } from '@/i18n'
 import HUD from '@/components/game/HUD'
 import PauseMenu from '@/components/game/PauseMenu'
 import GameOverOverlay from '@/components/game/GameOverOverlay'
@@ -56,16 +57,19 @@ export default function Game() {
   const [surrenderOver, setSurrenderOver] = useState<GameOverPayload | null>(null)
 
   const reduceMotion = useReducedMotionPref()
+  const { lang, t } = useLang()
 
   const hudRef = useRef(hud)
   const elapsedRef = useRef(elapsedSec)
   const resumingRef = useRef(resuming)
   const surrenderRef = useRef(surrenderOver)
+  const tRef = useRef(t)
   useEffect(() => {
     hudRef.current = hud
     elapsedRef.current = elapsedSec
     resumingRef.current = resuming
     surrenderRef.current = surrenderOver
+    tRef.current = t
   })
   const maxWantedRef = useRef(0)
 
@@ -95,6 +99,11 @@ export default function Game() {
       handleRef.current = null
     }
   }, [])
+
+  /* ---------------- idioma da engine (splash/toast/hint/cause) ------------ */
+  useEffect(() => {
+    handleRef.current?.setLanguage?.(lang)
+  }, [lang])
 
   /* ---------------- anti scroll / pull-to-refresh / gestos --------------- */
   useEffect(() => {
@@ -221,7 +230,7 @@ export default function Game() {
     }
     setSurrenderOver({
       kind: 'busted',
-      cause: 'se entregou à polícia',
+      cause: tRef.current.game.surrenderCause,
       stats: {
         timeSec,
         moneyEarned: money,
@@ -273,7 +282,7 @@ export default function Game() {
           <canvas
             ref={canvasRef}
             tabIndex={overlayOpen ? -1 : 0}
-            aria-label="Tela do jogo GTA VI Mini. Use W A S D ou setas para se mover, E para entrar ou sair do carro, espaço para freio de mão, M para som e Esc para pausar."
+            aria-label={t.game.canvasAria}
             className={cn(
               'game-crosshair block focus-visible:outline-none',
               gameOver ? 'gm-canvas-over' : 'gm-canvas-live',
@@ -303,7 +312,7 @@ export default function Game() {
               GTA VI Mini
             </span>
             <span className="animate-pulse font-pixel text-[10px] uppercase tracking-[0.08em] text-teal-neon">
-              Carregando a cidade…
+              {t.game.loading}
             </span>
           </motion.div>
         )}

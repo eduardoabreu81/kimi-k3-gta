@@ -18,7 +18,7 @@ export interface RunStats {
 
 export interface GameOverPayload {
   kind: GameOverKind;    // 'busted' = DETIDO, 'wasted' = SE DEU MAL
-  cause: string;         // ex.: "atropelado", "cercado pela polícia", "batida"
+  cause: string;         // no idioma ativo da engine — ex.: "explosão"/"explosion", "cercado pela polícia"/"surrounded by the police"
   stats: RunStats;
   best: number;          // melhor score salvo em localStorage
   isRecord: boolean;
@@ -56,6 +56,8 @@ export interface GameHandle {
   toggleMute(): void;
   toggleCrt(): void;
   setTouchInput(t: TouchInput): void;
+  /** troca o idioma das strings da engine (splash/toast/hint/cause) e re-emite o HudState atual */
+  setLanguage?(lang: 'pt' | 'en'): void;
   destroy(): void;       // cancela rAF, remove listeners, fecha AudioContext
 }
 

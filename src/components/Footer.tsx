@@ -1,16 +1,16 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
+import { useLang } from '@/i18n'
 import { scrollToTop } from '@/lib/scroll'
-
-const DISCLAIMER =
-  'GTA VI Mini — Edição de Fã é uma paródia não-oficial, sem fins lucrativos, feita por fãs. Não possui qualquer afiliação com Rockstar Games ou Take-Two Interactive. "Grand Theft Auto" e "GTA" são marcas registradas da Take-Two Interactive.'
 
 /**
  * Footer — design.md §8.2
- * Fundo night-900, borda superior grad-teal-line, disclaimer legal exato,
- * links, linha final pixel. Fade-in em bloco ao entrar na viewport.
+ * Fundo night-900, borda superior grad-teal-line, disclaimer legal exato
+ * (versões PT e EN fiéis no dict i18n), links, linha final pixel.
+ * Fade-in em bloco ao entrar na viewport.
  */
 export default function Footer() {
+  const { t } = useLang()
   const rootRef = useRef<HTMLElement>(null)
   const lineRef = useRef<HTMLDivElement>(null)
 
@@ -48,41 +48,41 @@ export default function Footer() {
             <span className="text-text-hi">GTA VI </span>
             <span className="grad-text-vice">MINI</span>
           </p>
-          <p className="mt-5 max-w-sm text-sm leading-relaxed text-text-dim">{DISCLAIMER}</p>
+          <p className="mt-5 max-w-sm text-sm leading-relaxed text-text-dim">{t.footer.disclaimer}</p>
         </div>
 
         {/* col 2: links */}
-        <nav aria-label="Links do rodapé" className="flex flex-col items-start gap-4">
+        <nav aria-label={t.footer.navigation} className="flex flex-col items-start gap-4">
           <span className="font-pixel text-[10px] uppercase tracking-[0.08em] text-teal-neon">
-            Navegação
+            {t.footer.navigation}
           </span>
           <Link to="/jogar" className="btn-ghost">
-            Jogar
+            {t.footer.play}
           </Link>
           <Link to="/como-jogar" className="btn-ghost">
-            Como Jogar
+            {t.footer.howTo}
           </Link>
           <button type="button" onClick={scrollToTop} className="btn-ghost">
-            Voltar ao topo
+            {t.footer.backToTop}
           </button>
         </nav>
 
         {/* col 3: assinatura */}
         <div className="flex flex-col gap-4">
           <span className="font-pixel text-[10px] uppercase tracking-[0.08em] text-teal-neon">
-            Créditos
+            {t.footer.credits}
           </span>
-          <p className="text-base text-text-mid">
-            Feito por fãs, de graça, no navegador.
+          <p className="text-base text-text-mid">{t.footer.madeBy}</p>
+          <p className="text-sm text-text-dim">
+            {year} · {t.footer.community}
           </p>
-          <p className="text-sm text-text-dim">{year} · Comunidade</p>
         </div>
       </div>
 
       {/* linha final pixel */}
       <div className="border-t border-[rgba(201,184,232,0.1)]">
         <p className="container-site py-6 text-center font-pixel text-[10px] uppercase tracking-[0.08em] text-text-dim">
-          Paródia não-oficial · Sem fins lucrativos
+          {t.footer.bottomLine}
         </p>
       </div>
     </footer>

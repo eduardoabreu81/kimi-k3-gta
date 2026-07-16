@@ -30,6 +30,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { useLang } from '@/i18n'
 import { getLenis } from '@/lib/scroll'
 import { cn } from '@/lib/utils'
 
@@ -171,186 +172,47 @@ function DrawShield({ className }: IconProps) {
 type ControlPart = { caps: string[]; join?: string }
 type ControlRow = { parts: ControlPart[]; label: string }
 
-const FOOT_ROWS: ControlRow[] = [
-  {
-    parts: [{ caps: ['W', 'A', 'S', 'D'] }, { join: 'ou', caps: ['↑', '←', '↓', '→'] }],
-    label: 'Andar',
-  },
-  { parts: [{ caps: ['SHIFT'] }], label: 'Correr' },
-  { parts: [{ caps: ['E'] }], label: 'Entrar no carro' },
+/* Textos vêm do dict i18n (t.howto.*); aqui ficam só os ícones por posição. */
+const OBJECTIVE_ICONS = [DrawCoin, DrawStar, DrawShield]
+
+const WANTED_BULLET_ICONS: LucideIcon[][] = [
+  [Car, Gauge, Ban],
+  [Car, Crosshair, Zap],
+  [Car, TrafficCone, Gauge],
+  [Car, TrafficCone, Crosshair],
+  [Siren, TrafficCone, Flame],
 ]
 
-const DRIVE_ROWS: ControlRow[] = [
-  { parts: [{ caps: ['W'] }, { join: '/', caps: ['↑'] }], label: 'Acelerar' },
-  { parts: [{ caps: ['S'] }, { join: '/', caps: ['↓'] }], label: 'Freio / ré' },
-  { parts: [{ caps: ['A', 'D'] }, { join: '/', caps: ['←', '→'] }], label: 'Esterçar' },
-  { parts: [{ caps: ['ESPAÇO'] }], label: 'Freio de mão (drift)' },
-  { parts: [{ caps: ['E'] }], label: 'Sair do carro' },
-]
+const MECHANIC_ICONS: LucideIcon[] = [Coins, Flame, HeartPulse, Hand]
 
-const OBJECTIVE = [
-  {
-    icon: DrawCoin,
-    title: 'Ganhe dinheiro',
-    desc: (
-      <>
-        Colete o dinheiro espalhado pela cidade e some na conta. Simples:{' '}
-        <span className="font-bold text-cash-green">R$</span> no canto da tela.
-      </>
-    ),
-  },
-  {
-    icon: DrawStar,
-    title: 'Suba o procurado',
-    desc: 'Caos chama polícia. Colisões, sustos e destruição enchem suas estrelas — e sua pontuação.',
-  },
-  {
-    icon: DrawShield,
-    title: 'Sobreviva',
-    desc: 'Se for detido ou destruído, acabou. Seu recorde fica salvo no navegador.',
-  },
-]
-
-type WantedLevel = {
-  label: string
-  desc: string
-  bullets: { icon: LucideIcon; text: string }[]
-  dica: string
+/** Fragmento de descrição com "nó" no meio (R$ destacado ou MiniKey). */
+function DescWithNode({ item }: { item: { a: string; k: 'money' | 'keyE' | 'keySpace' | null; b: string } }) {
+  const { t } = useLang()
+  return (
+    <>
+      {item.a}
+      {item.k === 'money' && (
+        <>
+          {' '}
+          <span className="font-bold text-cash-green">R$</span>
+        </>
+      )}
+      {item.k === 'keyE' && (
+        <>
+          {' '}
+          <MiniKey>E</MiniKey>
+        </>
+      )}
+      {item.k === 'keySpace' && (
+        <>
+          {' '}
+          <MiniKey>{t.howto.controls.space}</MiniKey>
+        </>
+      )}
+      {item.b}
+    </>
+  )
 }
-
-const WANTED_LEVELS: WantedLevel[] = [
-  {
-    label: 'Procurado',
-    desc: 'Uma viatura patrulha atrás de você.',
-    bullets: [
-      { icon: Car, text: '1 viatura' },
-      { icon: Gauge, text: 'velocidade normal' },
-      { icon: Ban, text: 'sem bloqueios' },
-    ],
-    dica: 'Duas curvas fechadas e você some do radar.',
-  },
-  {
-    label: 'Fugitivo',
-    desc: 'Duas viaturas e muito mais agressividade.',
-    bullets: [
-      { icon: Car, text: '2 viaturas' },
-      { icon: Crosshair, text: 'elas tentam te fechar' },
-      { icon: Zap, text: 'spawn mais rápido' },
-    ],
-    dica: 'Use o trânsito como parede entre você e elas.',
-  },
-  {
-    label: 'Perigoso',
-    desc: 'Bloqueios policiais nas avenidas.',
-    bullets: [
-      { icon: Car, text: '3+ viaturas' },
-      { icon: TrafficCone, text: 'bloqueios com cones' },
-      { icon: Gauge, text: 'viaturas mais rápidas' },
-    ],
-    dica: 'Corte pelos becos — bloqueio só existe em avenida.',
-  },
-  {
-    label: 'Muito Procurado',
-    desc: 'Reforços constantes, cerco fechando.',
-    bullets: [
-      { icon: Car, text: '4+ viaturas' },
-      { icon: TrafficCone, text: 'bloqueios duplos' },
-      { icon: Crosshair, text: 'elas antecipam suas curvas' },
-    ],
-    dica: 'Troque de carro sempre que puder — carro novo, vida nova.',
-  },
-  {
-    label: 'Caos Total',
-    desc: 'Um enxame de viaturas. Boa sorte.',
-    bullets: [
-      { icon: Siren, text: 'enxame de viaturas' },
-      { icon: TrafficCone, text: 'bloqueios em sequência' },
-      { icon: Flame, text: 'agressividade máxima' },
-    ],
-    dica: 'Não dirija em linha reta. Nunca.',
-  },
-]
-
-const MECHANICS: { icon: LucideIcon; title: string; desc: ReactNode }[] = [
-  {
-    icon: Coins,
-    title: 'Dinheiro pela cidade',
-    desc: (
-      <>
-        Notas verdes brilhando em calçadas, praças e praia. Passe por cima e o{' '}
-        <span className="font-bold text-cash-green">R$</span> é seu.
-      </>
-    ),
-  },
-  {
-    icon: Flame,
-    title: 'Carros têm vida própria',
-    desc: (
-      <>
-        Bata demais e o carro começa a soltar fumaça… depois faísca… depois explode. Saia antes com{' '}
-        <MiniKey>E</MiniKey>.
-      </>
-    ),
-  },
-  {
-    icon: HeartPulse,
-    title: 'Vida e dano',
-    desc: 'Capotamentos e explosões tiram sua vida. A barra no canto pulsa quando estiver feio.',
-  },
-  {
-    icon: Hand,
-    title: 'Freio de mão salva',
-    desc: (
-      <>
-        <MiniKey>ESPAÇO</MiniKey> em alta velocidade faz o carro derrapar e virar na hora. É assim
-        que se despista viatura.
-      </>
-    ),
-  },
-]
-
-const TIPS = [
-  {
-    num: '01',
-    bold: 'Beco é amigo',
-    rest: ' — viaturas são ruins em curvas apertadas; avenidas são território delas.',
-  },
-  {
-    num: '02',
-    bold: 'Troque de carro no meio da fuga',
-    rest: ' — alguns segundos a pé confundem o cerco.',
-  },
-  { num: '03', bold: 'Freio de mão na entrada da curva', rest: ', nunca no meio dela.' },
-  {
-    num: '04',
-    bold: 'O minimapa mostra viaturas antes de você vê-las',
-    rest: ' — olhe para ele mais do que para a estrada.',
-  },
-  { num: '05', bold: 'Estrelas piscando = quase livre.', rest: ' Não faça graça nessa hora.' },
-]
-
-const FAQ = [
-  {
-    q: 'Isso é o GTA VI oficial?',
-    a: 'Não. É uma paródia feita por fãs, de graça, sem nenhuma ligação com a Rockstar ou a Take-Two. O GTA VI de verdade é só com eles.',
-  },
-  {
-    q: 'Precisa instalar ou criar conta?',
-    a: 'Nada disso. Abriu a página, apertou Jogar Agora, já está dentro da cidade.',
-  },
-  {
-    q: 'Funciona no celular?',
-    a: 'Sim. Os controles viram um joystick virtual e botões na tela. No teclado, a experiência é a clássica.',
-  },
-  {
-    q: 'Meu progresso fica salvo?',
-    a: 'Seu recorde e suas configurações (som, modo CRT) ficam salvos no próprio navegador.',
-  },
-  {
-    q: 'Tem como zerar o jogo?',
-    a: 'Não existe final — existe recorde. Sobreviva mais, colete mais, chegue às 5 estrelas e volte para contar.',
-  },
-]
 
 /* ------------------------------------------------- card de controles (S2) */
 
@@ -471,7 +333,25 @@ function MechCard({
 /* ============================================================== COMO JOGAR */
 
 export default function ComoJogar() {
+  const { t } = useLang()
   const rootRef = useRef<HTMLDivElement>(null)
+
+  /* linhas de controles (S2): teclas fixas, labels/junções do dict */
+  const FOOT_ROWS: ControlRow[] = [
+    {
+      parts: [{ caps: ['W', 'A', 'S', 'D'] }, { join: t.howto.controls.or, caps: ['↑', '←', '↓', '→'] }],
+      label: t.howto.controls.footRows[0],
+    },
+    { parts: [{ caps: ['SHIFT'] }], label: t.howto.controls.footRows[1] },
+    { parts: [{ caps: ['E'] }], label: t.howto.controls.footRows[2] },
+  ]
+  const DRIVE_ROWS: ControlRow[] = [
+    { parts: [{ caps: ['W'] }, { join: '/', caps: ['↑'] }], label: t.howto.controls.driveRows[0] },
+    { parts: [{ caps: ['S'] }, { join: '/', caps: ['↓'] }], label: t.howto.controls.driveRows[1] },
+    { parts: [{ caps: ['A', 'D'] }, { join: '/', caps: ['←', '→'] }], label: t.howto.controls.driveRows[2] },
+    { parts: [{ caps: [t.howto.controls.space] }], label: t.howto.controls.driveRows[3] },
+    { parts: [{ caps: ['E'] }], label: t.howto.controls.driveRows[4] },
+  ]
 
   // S1 — hero
   const frameRef = useRef<HTMLDivElement>(null)
@@ -725,12 +605,13 @@ export default function ComoJogar() {
     }
   }
 
-  const wanted = wantedLevel > 0 ? WANTED_LEVELS[wantedLevel - 1] : null
+  const wanted = wantedLevel > 0 ? t.howto.wanted.levels[wantedLevel - 1] : null
+  const wantedIcons = wantedLevel > 0 ? WANTED_BULLET_ICONS[wantedLevel - 1] : null
 
   return (
     <div ref={rootRef}>
       {/* ============================== S1 — HERO ============================== */}
-      <section className="relative overflow-hidden" aria-label="Como jogar — manual">
+      <section className="relative overflow-hidden" aria-label={t.howto.heroAria}>
         <div
           className="grad-police-red animate-police-pulse absolute -left-24 -top-24 h-[360px] w-[360px] rounded-full"
           aria-hidden="true"
@@ -743,28 +624,25 @@ export default function ComoJogar() {
           {/* esquerda: título + lead + CTAs */}
           <div>
             <div data-hero-tag>
-              <SectionTag>COMO JOGAR</SectionTag>
+              <SectionTag>{t.howto.tag}</SectionTag>
             </div>
             <h1
-              aria-label="Manual do fora da lei."
+              aria-label={t.howto.h1}
               className="grad-text-vice mt-6 font-display text-[clamp(56px,9vw,120px)] uppercase leading-[0.95] tracking-[0.01em]"
             >
               <span aria-hidden="true">
-                <SplitChars text="Manual do fora da lei." attr="data-h1-char" />
+                <SplitChars text={t.howto.h1} attr="data-h1-char" />
               </span>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-text-mid md:text-xl">
-              <SplitWords
-                text="Dois minutos de leitura e você sai dirigindo. Spoiler: a polícia não vai gostar."
-                attr="data-lead-word"
-              />
+              <SplitWords text={t.howto.lead} attr="data-lead-word" />
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-6">
               <Link to="/jogar" data-hero-cta className="btn-primary btn-shine">
-                Jogar Agora
+                {t.howto.playNow}
               </Link>
               <a href="#controles" data-hero-cta onClick={scrollToControls} className="btn-ghost">
-                Ir direto aos controles
+                {t.howto.toControls}
               </a>
             </div>
           </div>
@@ -778,12 +656,12 @@ export default function ComoJogar() {
           >
             <img
               src="./gameplay-mock.svg"
-              alt="Gameplay de GTA VI Mini: perseguição policial em um cruzamento à noite, visto de cima"
+              alt={t.howto.imgAlt}
               loading="eager"
               className="aspect-video w-full rounded-2xl object-cover"
             />
             <div ref={chipRef} className="chip-pixel absolute left-4 top-4">
-              GAMEPLAY REAL (SIM, É NO NAVEGADOR)
+              {t.howto.chip}
             </div>
           </div>
         </div>
@@ -794,22 +672,22 @@ export default function ComoJogar() {
         <div className="container-site">
           <div className="max-w-3xl">
             <div data-ctrl-head>
-              <SectionTag>CONTROLES</SectionTag>
+              <SectionTag>{t.howto.controls.tag}</SectionTag>
             </div>
             <h2
               data-ctrl-head
               className="mt-5 font-display text-[clamp(30px,4vw,48px)] uppercase leading-[0.95] tracking-[0.02em] text-text-hi"
             >
-              Duas mãos no teclado.
+              {t.howto.controls.title}
             </h2>
             <p data-ctrl-head className="mt-5 text-lg text-text-mid md:text-xl">
-              No celular, os controles viram um joystick na tela. Simples assim.
+              {t.howto.controls.lead}
             </p>
           </div>
 
           <div ref={ctrlGridRef} className="mt-14 grid gap-6 lg:grid-cols-2">
-            <ControlCard title="A pé" icon={PersonStanding} accent="teal" rows={FOOT_ROWS} />
-            <ControlCard title="Dirigindo" icon={Car} accent="pink" rows={DRIVE_ROWS} />
+            <ControlCard title={t.howto.controls.onFoot} icon={PersonStanding} accent="teal" rows={FOOT_ROWS} />
+            <ControlCard title={t.howto.controls.driving} icon={Car} accent="pink" rows={DRIVE_ROWS} />
           </div>
 
           {/* barra "sempre vale" */}
@@ -821,18 +699,18 @@ export default function ComoJogar() {
               <span data-keycap data-kd="0.40" className="inline-flex will-change-transform">
                 <KeyCap wide>ESC</KeyCap>
               </span>
-              <span className="text-sm font-medium text-text-hi">Pausar</span>
+              <span className="text-sm font-medium text-text-hi">{t.howto.controls.pause}</span>
             </span>
             <span className="flex items-center gap-2.5">
               <span data-keycap data-kd="0.45" className="inline-flex will-change-transform">
                 <KeyCap>M</KeyCap>
               </span>
-              <span className="text-sm font-medium text-text-hi">Ligar/desligar som</span>
+              <span className="text-sm font-medium text-text-hi">{t.howto.controls.mute}</span>
             </span>
             <span className="flex items-center gap-2.5">
               <Mouse className="h-6 w-6 text-teal-neon" aria-hidden="true" />
               <span className="text-sm font-medium text-text-hi">
-                nada — é tudo no teclado, raiz.
+                {t.howto.controls.mouseNote}
               </span>
             </span>
           </div>
@@ -844,28 +722,33 @@ export default function ComoJogar() {
         <div className="container-site py-16">
           <div className="max-w-3xl">
             <div data-obj-head>
-              <SectionTag>A MISSÃO</SectionTag>
+              <SectionTag>{t.howto.objective.tag}</SectionTag>
             </div>
             <h2
               data-obj-head
               className="mt-5 font-display text-[clamp(30px,4vw,48px)] uppercase leading-[0.95] tracking-[0.02em] text-text-hi"
             >
-              Qual é a missão?
+              {t.howto.objective.title}
             </h2>
           </div>
           <div className="mt-12 grid gap-10 md:grid-cols-3">
-            {OBJECTIVE.map((o) => (
+            {t.howto.objective.items.map((o, i) => (
               <div key={o.title} data-obj-col>
                 <div className="text-teal-neon drop-shadow-[0_0_12px_rgba(0,229,199,0.4)]">
-                  <o.icon />
+                  {(() => {
+                    const Icon = OBJECTIVE_ICONS[i]
+                    return <Icon />
+                  })()}
                 </div>
                 <h3 className="mt-5 text-2xl font-bold text-text-hi">{o.title}</h3>
-                <p className="mt-3 leading-relaxed text-text-mid">{o.desc}</p>
+                <p className="mt-3 leading-relaxed text-text-mid">
+                  <DescWithNode item={o} />
+                </p>
               </div>
             ))}
           </div>
           <p className="mt-14 text-center text-sm font-medium tracking-[0.02em] text-text-dim">
-            Nenhum pedestre foi ferido de verdade. Eles são pixels e correm muito bem.
+            {t.howto.objective.footnote}
           </p>
         </div>
       </section>
@@ -875,16 +758,16 @@ export default function ComoJogar() {
         <div className="container-site">
           <div className="max-w-3xl">
             <div data-wanted-head>
-              <SectionTag>A POLÍCIA</SectionTag>
+              <SectionTag>{t.howto.wanted.tag}</SectionTag>
             </div>
             <h2
               data-wanted-head
               className="mt-5 font-display text-[clamp(30px,4vw,48px)] uppercase leading-[0.95] tracking-[0.02em] text-text-hi"
             >
-              Conheça suas cinco inimigas.
+              {t.howto.wanted.title}
             </h2>
             <p data-wanted-head className="mt-5 text-lg text-text-mid md:text-xl">
-              Toque nas estrelas para ver o que cada nível faz.
+              {t.howto.wanted.lead}
             </p>
           </div>
 
@@ -911,7 +794,7 @@ export default function ComoJogar() {
               />
             </div>
             <p className="mt-3 font-pixel text-[10px] uppercase tracking-[0.08em] text-text-dim">
-              Intensidade da perseguição
+              {t.howto.wanted.intensity}
             </p>
 
             {/* corpo: descrição do nível (crossfade) */}
@@ -924,32 +807,35 @@ export default function ComoJogar() {
                   exit={{ opacity: 0, y: reduceMotion ? 0 : -12 }}
                   transition={{ duration: 0.3, ease: EASE_OUT }}
                 >
-                  {wanted ? (
+                  {wanted && wantedIcons ? (
                     <>
                       <h3 className="text-2xl font-bold text-text-hi">
                         <span className="text-star-gold">★{wantedLevel}</span> {wanted.label}
                       </h3>
                       <p className="mt-2 text-lg text-text-mid md:text-xl">{wanted.desc}</p>
                       <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2.5">
-                        {wanted.bullets.map((b) => (
-                          <li key={b.text} className="flex items-center gap-2 text-sm text-text-mid">
-                            <b.icon className="h-4 w-4 shrink-0 text-teal-neon" aria-hidden="true" />
-                            {b.text}
-                          </li>
-                        ))}
+                        {wanted.bullets.map((text, bi) => {
+                          const BulletIcon = wantedIcons[bi]
+                          return (
+                            <li key={text} className="flex items-center gap-2 text-sm text-text-mid">
+                              <BulletIcon className="h-4 w-4 shrink-0 text-teal-neon" aria-hidden="true" />
+                              {text}
+                            </li>
+                          )
+                        })}
                       </ul>
                       <div className="mt-6 flex items-start gap-3 rounded-xl border border-teal-neon/30 bg-[rgba(0,229,199,0.06)] px-4 py-3">
                         <span className="shrink-0 pt-0.5 font-pixel text-[10px] uppercase tracking-[0.08em] text-teal-neon">
-                          DICA:
+                          {t.howto.wanted.tipLabel}
                         </span>
                         <p className="text-sm text-text-hi">{wanted.dica}</p>
                       </div>
                     </>
                   ) : (
                     <>
-                      <h3 className="text-2xl font-bold text-text-hi">Aquecendo a sirene…</h3>
+                      <h3 className="text-2xl font-bold text-text-hi">{t.howto.wanted.warmupTitle}</h3>
                       <p className="mt-2 text-lg text-text-mid md:text-xl">
-                        Toque nas estrelas para ver o que cada nível faz.
+                        {t.howto.wanted.warmupDesc}
                       </p>
                     </>
                   )}
@@ -959,11 +845,8 @@ export default function ComoJogar() {
 
             {/* evasão */}
             <div className="mt-10 rounded-r-xl border-l-[3px] border-teal-neon bg-night-700/40 p-6">
-              <h3 className="text-2xl font-bold text-text-hi">Como as estrelas caem</h3>
-              <p className="mt-3 leading-relaxed text-text-mid">
-                Saia da vista das viaturas e as estrelas começam a piscar. Aguente firme alguns
-                segundos sem ser visto e elas zeram. Quanto mais estrelas, mais tempo escondido.
-              </p>
+              <h3 className="text-2xl font-bold text-text-hi">{t.howto.wanted.evasionTitle}</h3>
+              <p className="mt-3 leading-relaxed text-text-mid">{t.howto.wanted.evasionDesc}</p>
             </div>
           </div>
         </div>
@@ -974,18 +857,23 @@ export default function ComoJogar() {
         <div className="container-site">
           <div className="max-w-3xl">
             <div data-mech-head>
-              <SectionTag>MECÂNICAS</SectionTag>
+              <SectionTag>{t.howto.mechanics.tag}</SectionTag>
             </div>
             <h2
               data-mech-head
               className="mt-5 font-display text-[clamp(30px,4vw,48px)] uppercase leading-[0.95] tracking-[0.02em] text-text-hi"
             >
-              Coisas que a cidade esconde.
+              {t.howto.mechanics.title}
             </h2>
           </div>
           <div className="mt-14 grid gap-6 sm:grid-cols-2">
-            {MECHANICS.map((m) => (
-              <MechCard key={m.title} icon={m.icon} title={m.title} desc={m.desc} />
+            {t.howto.mechanics.items.map((m, i) => (
+              <MechCard
+                key={m.title}
+                icon={MECHANIC_ICONS[i]}
+                title={m.title}
+                desc={<DescWithNode item={m} />}
+              />
             ))}
           </div>
         </div>
@@ -996,27 +884,27 @@ export default function ComoJogar() {
         <div className="mx-auto w-full max-w-[900px] px-6">
           <div>
             <div data-tips-head>
-              <SectionTag>SOBREVIVA</SectionTag>
+              <SectionTag>{t.howto.tips.tag}</SectionTag>
             </div>
             <h2
               data-tips-head
               className="mt-5 font-display text-[clamp(30px,4vw,48px)] uppercase leading-[0.95] tracking-[0.02em] text-text-hi"
             >
-              Cinco truques de quem nunca foi pego.
+              {t.howto.tips.title}
             </h2>
           </div>
           <ol className="mt-12 divide-y divide-violet-haze">
-            {TIPS.map((t) => (
-              <li key={t.num} data-tip className="step flex items-start gap-6 py-6 first:pt-0">
+            {t.howto.tips.items.map((tip) => (
+              <li key={tip.num} data-tip className="step flex items-start gap-6 py-6 first:pt-0">
                 <span
                   data-tip-num
                   className="step-num w-16 shrink-0 font-display text-[48px] leading-none"
                 >
-                  {t.num}
+                  {tip.num}
                 </span>
                 <p className="pt-1 text-lg leading-relaxed md:text-xl">
-                  <strong className="font-bold text-text-hi">{t.bold}</strong>
-                  <span className="text-text-mid">{t.rest}</span>
+                  <strong className="font-bold text-text-hi">{tip.bold}</strong>
+                  <span className="text-text-mid">{tip.rest}</span>
                 </p>
               </li>
             ))}
@@ -1029,17 +917,17 @@ export default function ComoJogar() {
         <div className="mx-auto w-full max-w-[800px] px-6">
           <div>
             <div data-faq-head>
-              <SectionTag>DÚVIDAS</SectionTag>
+              <SectionTag>{t.howto.faq.tag}</SectionTag>
             </div>
             <h2
               data-faq-head
               className="mt-5 font-display text-[clamp(30px,4vw,48px)] uppercase leading-[0.95] tracking-[0.02em] text-text-hi"
             >
-              Perguntas de quem acabou de chegar.
+              {t.howto.faq.title}
             </h2>
           </div>
           <Accordion type="single" collapsible className="mt-10 space-y-3">
-            {FAQ.map((f, i) => (
+            {t.howto.faq.items.map((f, i) => (
               <AccordionItem
                 key={f.q}
                 value={`item-${i}`}
@@ -1066,16 +954,16 @@ export default function ComoJogar() {
             className="grad-vice rounded-[24px] px-6 py-16 text-center text-night-950 md:p-[72px]"
           >
             <h2 className="font-display text-[clamp(30px,5vw,48px)] uppercase leading-[1.05] tracking-[0.02em]">
-              TEORIA APRENDIDA. HORA DA PRÁTICA.
+              {t.howto.cta.title}
             </h2>
-            <p className="mt-4 text-lg font-medium">A cidade não vai se assustar sozinha.</p>
+            <p className="mt-4 text-lg font-medium">{t.howto.cta.sub}</p>
             <div className="mt-10">
               <CtaPulse>
                 <Link
                   to="/jogar"
                   className="btn-shine inline-flex items-center justify-center rounded-full bg-night-950 px-11 py-[18px] text-lg font-bold transition-transform duration-200 hover:scale-[1.04] active:scale-95"
                 >
-                  <span className="grad-text-vice">Jogar Agora</span>
+                  <span className="grad-text-vice">{t.howto.cta.cta}</span>
                 </Link>
               </CtaPulse>
             </div>

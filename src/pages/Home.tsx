@@ -6,6 +6,7 @@ import { useGSAP } from '@gsap/react'
 import SectionTag from '@/components/SectionTag'
 import WantedStars, { STAR_PATH } from '@/components/WantedStars'
 import KeyCap from '@/components/KeyCap'
+import { useLang } from '@/i18n'
 import { cn } from '@/lib/utils'
 
 gsap.registerPlugin(ScrollTrigger, useGSAP)
@@ -144,87 +145,24 @@ function RadarIcon({ className }: IconProps) {
 }
 
 /* ------------------------------------------------------------------ dados */
+/* Textos vêm do dict i18n (t.home.*); aqui ficam só ícones/estilos/valores. */
 
-const MARQUEE_ITEMS = [
-  'PARÓDIA DE FÃ',
-  'SEM AFILIAÇÃO COM A ROCKSTAR',
-  '100% GRÁTIS',
-  'FEITO NO NAVEGADOR',
-  'GTA É MARCA DA TAKE-TWO',
+const FEATURE_ICONS = [MapIcon, StarIcon, KeyIcon, TrafficIcon, PeopleIcon, RadarIcon]
+
+const CALLOUT_STYLES = [
+  { left: '50%', top: '13%' },
+  { left: '14%', top: '62%' },
+  { left: '63%', top: '44%' },
+  { left: '37%', top: '79%' },
 ]
 
-const FEATURES = [
-  {
-    icon: MapIcon,
-    title: 'Cidade Aberta',
-    desc: 'Avenidas, becos, subúrbio e praia. Explore no seu ritmo — ou fuja dela a 180 por hora.',
-  },
-  {
-    icon: StarIcon,
-    title: 'Nível de Procurado',
-    desc: 'De 1 a 5 estrelas. Quanto mais caos, mais viaturas, bloqueios e sirene na sua cola.',
-  },
-  {
-    icon: KeyIcon,
-    title: 'Carros Roubáveis',
-    desc: 'Aperte E perto de qualquer carro e ele é seu. Cada um acelera e derrapa de um jeito.',
-  },
-  {
-    icon: TrafficIcon,
-    title: 'Trânsito Vivo',
-    desc: 'Carros civis circulam pela cidade. Use o trânsito como escudo — ou como obstáculo.',
-  },
-  {
-    icon: PeopleIcon,
-    title: 'Pedestres Reativos',
-    desc: 'Eles passeiam, conversam e saem correndo desesperados quando você chega perto.',
-  },
-  {
-    icon: RadarIcon,
-    title: 'Minimapa em Tempo Real',
-    desc: 'Viaturas, pedestres e sua posição no radar. Essencial para despistar a polícia.',
-  },
-]
-
-const CALLOUTS = [
-  { label: 'ESTRELAS DE PROCURADO', style: { left: '50%', top: '13%' } },
-  { label: 'MINIMAPA AO VIVO', style: { left: '14%', top: '62%' } },
-  { label: 'SEU CARRO (ROUBADO)', style: { left: '63%', top: '44%' } },
-  { label: 'GIROFLEX DA POLÍCIA', style: { left: '37%', top: '79%' } },
-]
-
-const WANTED_LEVELS = [
-  { label: 'Procurado', desc: 'Uma viatura no seu encalço. Dá pra despistar fácil.' },
-  { label: 'Fugitivo', desc: 'Duas viaturas, dirigindo muito mais agressivo.' },
-  { label: 'Perigoso', desc: 'Bloqueios policiais nas avenidas e viaturas mais rápidas.' },
-  { label: 'Muito Procurado', desc: 'Reforços constantes. A cidade inteira fecha o cerco.' },
-  { label: 'Caos Total', desc: 'Enxame de viaturas. Sobreviva se for capaz.' },
-]
 const CYCLE_KEY = 'gta6mini.wantedCycled'
 
-const STEPS = [
-  {
-    num: '01',
-    title: 'Entre no carro',
-    desc: 'Chegue perto de qualquer carro e aperte E. O volante é seu, a culpa também.',
-  },
-  {
-    num: '02',
-    title: 'Cause o caos',
-    desc: 'Pegue o dinheiro espalhado pela cidade, assuste pedestres e provoque a polícia para valer.',
-  },
-  {
-    num: '03',
-    title: 'Sobreviva à fuga',
-    desc: 'Troque de carro, corte becos e saia da vista da polícia até as estrelas sumirem.',
-  },
-]
-
-const STATS = [
-  { value: 0, suffix: '', label: 'REAIS CUSTOU PRA JOGAR', infinity: false },
-  { value: 100, suffix: '%', label: 'FEITO POR FÃS', infinity: false },
-  { value: 5, suffix: '', label: 'ESTRELAS DE PERIGO', infinity: false },
-  { value: 0, suffix: '', label: 'FUGAS PRA TENTAR', infinity: true },
+const STAT_VALUES = [
+  { value: 0, suffix: '', infinity: false },
+  { value: 100, suffix: '%', infinity: false },
+  { value: 5, suffix: '', infinity: false },
+  { value: 0, suffix: '', infinity: true },
 ]
 
 /* ------------------------------------------------- card com tilt 3D (S3) */
@@ -272,6 +210,7 @@ function FeatureCard({
 /* ==================================================================== HOME */
 
 export default function Home() {
+  const { t } = useLang()
   const rootRef = useRef<HTMLDivElement>(null)
 
   // S1 — hero
@@ -606,7 +545,7 @@ export default function Home() {
     { scope: rootRef },
   )
 
-  const wanted = wantedLevel > 0 ? WANTED_LEVELS[wantedLevel - 1] : null
+  const wanted = wantedLevel > 0 ? t.home.wanted.levels[wantedLevel - 1] : null
 
   return (
     <div ref={rootRef}>
@@ -614,7 +553,7 @@ export default function Home() {
       <section
         ref={heroSecRef}
         className="relative flex min-h-[max(720px,100dvh)] flex-col overflow-hidden"
-        aria-label="GTA VI Mini — capa"
+        aria-label={t.home.heroAria}
       >
         {/* 1. céu */}
         <div ref={skyRef} className="grad-sunset-sky absolute inset-0" aria-hidden="true" />
@@ -690,7 +629,7 @@ export default function Home() {
           className="container-site relative z-10 flex flex-1 flex-col items-center justify-center pb-28 pt-24 text-center"
         >
           <div ref={chipRef} className="chip-pixel mb-8">
-            EDIÇÃO DE FÃ — PARÓDIA NÃO-OFICIAL
+            {t.home.chip}
           </div>
           <div ref={logoRef} className="[transform-style:preserve-3d]">
             <div className="text-glow-pink font-display text-[clamp(72px,14vw,180px)] uppercase leading-[0.9] tracking-[0.01em] text-text-hi">
@@ -708,29 +647,28 @@ export default function Home() {
             </div>
           </div>
           <h1 className="mt-8 max-w-xl text-2xl font-medium text-text-hi md:text-[28px]">
-            <SplitWords text="A cidade é sua. A polícia discorda." attr="data-tag-word" />
+            <SplitWords text={t.home.tagline} attr="data-tag-word" />
           </h1>
           <p ref={subRef} className="mt-4 max-w-[560px] text-lg leading-relaxed text-text-mid md:text-xl">
-            Mini-game de navegador feito por fãs: visão clássica de cima, cidade aberta, carros
-            roubáveis e até 5 estrelas de procurado. Direto do navegador, sem instalar nada.
+            {t.home.sub}
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link to="/jogar" data-cta className="btn-primary btn-cta btn-shine rounded-full px-10 py-[18px] text-lg">
-              Jogar Agora
+              {t.home.playNow}
             </Link>
             <Link to="/como-jogar" data-cta className="btn-secondary px-8 py-4">
-              Como Jogar
+              {t.home.howTo}
             </Link>
           </div>
           <p ref={microRef} className="mt-8 font-pixel text-[10px] uppercase tracking-[0.08em] text-text-dim">
-            GRÁTIS · SEM DOWNLOAD · RODA NO CELULAR
+            {t.home.micro}
           </p>
         </div>
         {/* 8. scroll cue */}
         <div ref={cueRef} className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2">
           <div className="animate-cue-bounce flex flex-col items-center gap-2">
             <KeyCap className="h-8 w-8 text-xs">↓</KeyCap>
-            <span className="font-pixel text-[10px] uppercase tracking-[0.08em] text-text-dim">ROLE</span>
+            <span className="font-pixel text-[10px] uppercase tracking-[0.08em] text-text-dim">{t.home.scroll}</span>
           </div>
         </div>
       </section>
@@ -742,10 +680,10 @@ export default function Home() {
             <div className="animate-marquee flex w-max items-center group-hover:[animation-play-state:paused]">
               {[0, 1].map((half) => (
                 <div key={half} className="flex items-center">
-                  {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((t, i) => (
+                  {[...t.home.marquee, ...t.home.marquee].map((txt, i) => (
                     <span key={i} className="flex items-center">
                       <span className="whitespace-nowrap px-6 font-display text-2xl uppercase tracking-[0.02em] text-night-950">
-                        {t}
+                        {txt}
                       </span>
                       <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden="true">
                         <path d={STAR_PATH} fill="#FFD60A" />
@@ -763,17 +701,17 @@ export default function Home() {
       <section id="o-jogo" className="py-24 md:py-32">
         <div className="container-site">
           <div ref={featHeadRef} className="max-w-3xl">
-            <SectionTag>O JOGO</SectionTag>
+            <SectionTag>{t.home.features.tag}</SectionTag>
             <h2 className="mt-5 font-display text-[clamp(40px,6vw,72px)] uppercase leading-[0.95] tracking-[0.01em] text-text-hi">
-              <SplitWords text="Tudo que um GTA de verdade tem." attr="data-feat-word" />
+              <SplitWords text={t.home.features.title} attr="data-feat-word" />
             </h2>
             <p ref={featLeadRef} className="mt-5 text-lg text-text-mid md:text-xl">
-              Só que cabe numa aba do navegador. Sem 150 GB de download.
+              {t.home.features.lead}
             </p>
           </div>
           <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f) => (
-              <FeatureCard key={f.title} icon={f.icon} title={f.title} desc={f.desc} />
+            {t.home.features.items.map((f, i) => (
+              <FeatureCard key={f.title} icon={FEATURE_ICONS[i]} title={f.title} desc={f.desc} />
             ))}
           </div>
         </div>
@@ -783,13 +721,13 @@ export default function Home() {
       <section
         ref={showSecRef}
         className="relative flex min-h-[100dvh] flex-col justify-center overflow-hidden py-20"
-        aria-label="Dentro do jogo"
+        aria-label={t.home.showcase.aria}
       >
         <div className="container-site">
           <div ref={showHeadRef} className="mb-10 text-center">
-            <SectionTag className="justify-center">DENTRO DO JOGO</SectionTag>
+            <SectionTag className="justify-center">{t.home.showcase.tag}</SectionTag>
             <h2 className="mt-5 font-display text-[clamp(30px,4vw,48px)] uppercase leading-[0.95] tracking-[0.02em] text-text-hi">
-              Isto é o que roda na sua aba.
+              {t.home.showcase.title}
             </h2>
           </div>
 
@@ -801,22 +739,22 @@ export default function Home() {
             <img
               ref={mockImgRef}
               src="./gameplay-mock.svg"
-              alt="Gameplay de GTA VI Mini: perseguição policial vista de cima em um cruzamento à noite"
+              alt={t.home.showcase.imgAlt}
               loading="lazy"
               className="aspect-video w-full object-cover will-change-transform"
             />
             <div className="scanlines pointer-events-none absolute inset-0 opacity-50" aria-hidden="true" />
 
             {/* callouts (overlay desktop) */}
-            {CALLOUTS.map((c) => (
+            {t.home.showcase.callouts.map((label, i) => (
               <div
-                key={c.label}
+                key={label}
                 data-callout
                 className="absolute hidden -translate-x-1/2 flex-col items-center md:flex"
-                style={c.style}
+                style={CALLOUT_STYLES[i]}
               >
                 <span className="whitespace-nowrap rounded-full border border-teal-neon bg-[rgba(13,6,24,0.9)] px-3 py-1.5 font-pixel text-[10px] uppercase tracking-[0.08em] text-teal-neon">
-                  {c.label}
+                  {label}
                 </span>
                 <span className="callout-line mt-1 h-6 w-px origin-top border-l border-dashed border-teal-neon" aria-hidden="true" />
               </div>
@@ -825,9 +763,9 @@ export default function Home() {
 
           {/* fallback mobile: callouts empilhados abaixo */}
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-3 md:hidden">
-            {CALLOUTS.map((c) => (
-              <li key={c.label} className="chip-pixel">
-                {c.label}
+            {t.home.showcase.callouts.map((label) => (
+              <li key={label} className="chip-pixel">
+                {label}
               </li>
             ))}
           </ul>
@@ -839,18 +777,16 @@ export default function Home() {
         <div className="container-site grid items-center gap-14 lg:grid-cols-2">
           <div>
             <div data-wanted-reveal>
-              <SectionTag>A POLÍCIA</SectionTag>
+              <SectionTag>{t.home.wanted.tag}</SectionTag>
             </div>
             <h2
               data-wanted-reveal
               className="mt-5 font-display text-[clamp(40px,6vw,72px)] uppercase leading-[0.95] tracking-[0.01em] text-text-hi"
             >
-              Cinco estrelas. Zero piedade.
+              {t.home.wanted.title}
             </h2>
             <p data-wanted-reveal className="mt-5 max-w-xl text-lg leading-relaxed text-text-mid md:text-xl">
-              Bata em viaturas, cause acidentes e assuste a cidade para subir o seu procurado. Cada
-              estrela deixa a fuga mais impossível. Passe um tempo fora da vista da polícia para as
-              estrelas caírem.
+              {t.home.wanted.lead}
             </p>
           </div>
 
@@ -879,8 +815,8 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  <p className="text-2xl font-bold text-text-hi">Aquecendo a sirene…</p>
-                  <p className="mt-2 text-lg text-text-mid">Contando as viaturas do bairro.</p>
+                  <p className="text-2xl font-bold text-text-hi">{t.home.wanted.warmupTitle}</p>
+                  <p className="mt-2 text-lg text-text-mid">{t.home.wanted.warmupDesc}</p>
                 </>
               )}
             </div>
@@ -891,7 +827,7 @@ export default function Home() {
               />
             </div>
             <p className="mt-3 font-pixel text-[10px] uppercase tracking-[0.08em] text-text-dim">
-              Intensidade da perseguição
+              {t.home.wanted.intensity}
             </p>
           </div>
         </div>
@@ -901,9 +837,9 @@ export default function Home() {
       <section ref={stepsRef} className="py-24 md:py-32">
         <div className="container-site">
           <div className="text-center">
-            <SectionTag className="justify-center">O ESQUEMA</SectionTag>
+            <SectionTag className="justify-center">{t.home.steps.tag}</SectionTag>
             <h2 className="mt-5 font-display text-[clamp(40px,6vw,72px)] uppercase leading-[0.95] tracking-[0.01em] text-text-hi">
-              Roube. Corra. Sobreviva.
+              {t.home.steps.title}
             </h2>
           </div>
           <div className="relative mt-16 grid gap-14 md:grid-cols-3 md:gap-8">
@@ -912,7 +848,7 @@ export default function Home() {
               aria-hidden="true"
               className="absolute left-[18%] right-[18%] top-12 hidden border-t-2 border-dashed border-teal-neon/40 md:block"
             />
-            {STEPS.map((s) => (
+            {t.home.steps.items.map((s) => (
               <div key={s.num} className="step relative text-center md:text-left">
                 <div data-step-num className="step-num font-display text-[96px] leading-none">
                   {s.num}
@@ -930,8 +866,8 @@ export default function Home() {
       {/* ============================== S7 — STATS ============================== */}
       <section ref={statsRef} className="border-y border-violet-haze bg-night-900 py-16">
         <div className="container-site grid grid-cols-2 gap-10 lg:grid-cols-4">
-          {STATS.map((s) => (
-            <div key={s.label} className="text-center">
+          {STAT_VALUES.map((s, i) => (
+            <div key={t.home.stats[i]} className="text-center">
               {s.infinity ? (
                 <div data-infinity className="grad-text-vice font-display text-[64px] leading-none">
                   ∞
@@ -947,7 +883,7 @@ export default function Home() {
                 </div>
               )}
               <p data-stat-label className="mt-3 font-pixel text-[10px] uppercase tracking-[0.08em] text-text-dim">
-                {s.label}
+                {t.home.stats[i]}
               </p>
             </div>
           ))}
@@ -976,19 +912,19 @@ export default function Home() {
         />
         <div className="container-site relative z-10 py-24">
           <h2 className="grad-text-vice font-display text-[clamp(56px,9vw,120px)] uppercase leading-[0.95] tracking-[0.01em]">
-            <SplitChars text="PRONTO PARA" attr="data-final-char" />
+            <SplitChars text={t.home.final.titleA} attr="data-final-char" />
             <br />
-            <SplitChars text="O CAOS?" attr="data-final-char" />
+            <SplitChars text={t.home.final.titleB} attr="data-final-char" />
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-lg text-text-mid md:text-xl">
-            A cidade já está rodando. Só falta você apertar o acelerador.
+            {t.home.final.sub}
           </p>
           <div ref={finalBtnRef} className="mt-10 flex flex-col items-center gap-6">
             <Link to="/jogar" className="btn-primary btn-cta btn-shine rounded-full px-12 py-5 text-xl">
-              Jogar Agora — É de Graça
+              {t.home.final.cta}
             </Link>
             <Link to="/como-jogar" className="btn-ghost">
-              Aprenda os controles
+              {t.home.final.learn}
             </Link>
           </div>
         </div>

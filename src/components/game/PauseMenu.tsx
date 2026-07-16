@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import KeyCap from '@/components/KeyCap'
+import LangToggle from '@/components/LangToggle'
 import { Switch } from '@/components/ui/switch'
+import { useLang } from '@/i18n'
 
 /* ============================================================================
    PauseMenu — game.md §6. Overlay fullscreen com blur, painel central
@@ -12,15 +14,6 @@ import { Switch } from '@/components/ui/switch'
    ========================================================================== */
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as [number, number, number, number]
-
-const CONTROLS: Array<{ keys: string[]; label: string; wide?: boolean }> = [
-  { keys: ['WASD'], label: 'DIRIGIR/ANDAR', wide: true },
-  { keys: ['E'], label: 'ENTRAR/SAIR' },
-  { keys: ['ESPAÇO'], label: 'FREIO DE MÃO', wide: true },
-  { keys: ['SHIFT'], label: 'CORRER', wide: true },
-  { keys: ['M'], label: 'SOM' },
-  { keys: ['ESC'], label: 'PAUSAR', wide: true },
-]
 
 export interface PauseMenuProps {
   open: boolean
@@ -61,6 +54,7 @@ export default function PauseMenu({
   onToggleCrt,
   onSurrender,
 }: PauseMenuProps) {
+  const { t } = useLang()
   const navigate = useNavigate()
   const continueRef = useRef<HTMLButtonElement>(null)
   const [vibrate, setVibrate] = useState(() => readCfg('gtamini.cfg.vibracao', true))
@@ -92,7 +86,7 @@ export default function PauseMenu({
           key="pause-overlay"
           role="dialog"
           aria-modal="true"
-          aria-label="Jogo pausado"
+          aria-label={t.game.pause.dialogAria}
           data-allow-scroll
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -110,10 +104,10 @@ export default function PauseMenu({
           >
             {/* título com glitch sutil (§6) */}
             <h2
-              data-text="PAUSADO"
+              data-text={t.game.pause.title}
               className="gm-glitch gm-glitch-idle grad-text-vice text-center font-display text-[clamp(40px,6vw,72px)] uppercase leading-none tracking-[0.01em]"
             >
-              PAUSADO
+              {t.game.pause.title}
             </h2>
 
             {/* botões em coluna, stagger 60ms slide-left */}
@@ -132,7 +126,7 @@ export default function PauseMenu({
                 whileHover={{ x: 4 }}
               >
                 <button ref={continueRef} type="button" className="btn-primary w-full" onClick={onResume}>
-                  Continuar
+                  {t.game.pause.continue}
                 </button>
               </motion.div>
 
@@ -142,7 +136,7 @@ export default function PauseMenu({
                 whileHover={{ x: 4 }}
               >
                 <button type="button" className="btn-secondary w-full" onClick={onRestart}>
-                  Reiniciar
+                  {t.game.pause.restart}
                 </button>
               </motion.div>
 
@@ -156,7 +150,7 @@ export default function PauseMenu({
                   className="btn-secondary w-full"
                   onClick={() => window.open(`${import.meta.env.BASE_URL}#/como-jogar`, '_blank', 'noopener')}
                 >
-                  Como Jogar
+                  {t.game.pause.howTo}
                 </button>
               </motion.div>
 
@@ -167,7 +161,7 @@ export default function PauseMenu({
                 className="flex justify-center pt-1"
               >
                 <button type="button" className="btn-ghost" onClick={() => navigate('/')}>
-                  Voltar ao Início
+                  {t.game.pause.backHome}
                 </button>
               </motion.div>
 
@@ -177,60 +171,67 @@ export default function PauseMenu({
                 whileHover={{ x: 4 }}
               >
                 <button type="button" className="btn-danger w-full" onClick={onSurrender}>
-                  Desistir da fuga
+                  {t.game.pause.surrender}
                 </button>
               </motion.div>
             </motion.div>
 
-            {/* toggles (§6): Som, Modo CRT, Vibração, Reduzir movimento */}
+            {/* toggles (§6): Som, Modo CRT, Vibração, Reduzir movimento + Idioma */}
             <div className="mt-6 grid grid-cols-1 gap-3 border-t border-violet-haze/60 pt-5 sm:grid-cols-2">
               <label className="flex items-center justify-between gap-3">
                 <span className="font-pixel text-[9px] uppercase tracking-[0.08em] text-text-dim">
-                  Som
+                  {t.game.pause.sound}
                 </span>
                 <Switch
                   checked={!muted}
                   onCheckedChange={(v) => {
                     if (v === muted) onToggleMute()
                   }}
-                  aria-label="Som ligado ou desligado (M)"
+                  aria-label={t.game.pause.soundAria}
                 />
               </label>
               <label className="flex items-center justify-between gap-3">
                 <span className="font-pixel text-[9px] uppercase tracking-[0.08em] text-text-dim">
-                  Modo CRT
+                  {t.game.pause.crt}
                 </span>
                 <Switch
                   checked={crt}
                   onCheckedChange={() => onToggleCrt()}
-                  aria-label="Modo CRT (scanlines)"
+                  aria-label={t.game.pause.crtAria}
                 />
               </label>
               <label className="flex items-center justify-between gap-3">
                 <span className="font-pixel text-[9px] uppercase tracking-[0.08em] text-text-dim">
-                  Vibração
+                  {t.game.pause.vibration}
                 </span>
                 <Switch
                   checked={vibrate}
                   onCheckedChange={toggleVibrate}
-                  aria-label="Vibração em dispositivos móveis"
+                  aria-label={t.game.pause.vibrationAria}
                 />
               </label>
               <label className="flex items-center justify-between gap-3">
                 <span className="font-pixel text-[9px] uppercase tracking-[0.08em] text-text-dim">
-                  Reduzir movimento
+                  {t.game.pause.reduceMotion}
                 </span>
                 <Switch
                   checked={reduceMotion}
                   onCheckedChange={toggleReduceMotion}
-                  aria-label="Reduzir movimento"
+                  aria-label={t.game.pause.reduceMotionAria}
                 />
               </label>
+              {/* idioma — ao lado dos switches (§i18n) */}
+              <div className="flex items-center justify-between gap-3 sm:col-span-2">
+                <span className="font-pixel text-[9px] uppercase tracking-[0.08em] text-text-dim">
+                  {t.game.pause.language}
+                </span>
+                <LangToggle />
+              </div>
             </div>
 
             {/* resumo de controles (§6): 2 colunas, keycaps mini + labels pixel 9px */}
             <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-violet-haze/60 pt-5">
-              {CONTROLS.map((c) => (
+              {t.game.pause.controls.map((c) => (
                 <div key={c.label} className="flex items-center gap-2">
                   <KeyCap
                     wide={c.wide}
@@ -246,7 +247,7 @@ export default function PauseMenu({
             </div>
 
             <p className="mt-5 text-center font-pixel text-[9px] uppercase tracking-[0.08em] text-text-dim">
-              ESC — CONTINUAR
+              {t.game.pause.escContinue}
             </p>
           </motion.div>
         </motion.div>

@@ -2,9 +2,12 @@ import { useEffect, useMemo, useRef } from 'react'
 import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router'
 import { AnimatePresence, motion } from 'framer-motion'
+import LangToggle from '@/components/LangToggle'
 import SectionTag from '@/components/SectionTag'
 import WantedStars, { STAR_PATH } from '@/components/WantedStars'
 import type { GameOverPayload } from '@/game/types'
+import { useLang } from '@/i18n'
+import type { Dict } from '@/i18n'
 import { formatClock, formatKm, formatMoney, useCoarsePointer, useCountUp } from './hooks'
 
 /* ============================================================================
@@ -33,11 +36,11 @@ const buzz = (ms: number) => {
   }
 }
 
-/** variante de subtítulo por causa da morte (game-over.md §3) */
-function causeVariant(cause: string): string | null {
+/** variante de subtítulo por causa da morte (game-over.md §3) — casa PT e EN */
+function causeVariant(cause: string, d: Dict['game']['over']): string | null {
   const c = cause.toLowerCase()
-  if (c.includes('explos')) return 'Seu carro virou saudade.'
-  if (c.includes('capot')) return 'A física venceu dessa vez.'
+  if (c.includes('explos')) return d.causeExplosion
+  if (c.includes('capot') || c.includes('rolled') || c.includes('rollover')) return d.causeRollover
   return null
 }
 
@@ -82,6 +85,7 @@ function StarConfetti({ count }: { count: number }) {
 
 /* ---------- painel de estatísticas (§4) ------------------------------------ */
 function StatsPanel({ payload, coarse }: { payload: GameOverPayload; coarse: boolean }) {
+  const { t } = useLang()
   const { stats, isRecord } = payload
   /* count-up 600ms power2.out, após a entrada do painel (§4) */
   const time = useCountUp(stats.timeSec, 600, 750)
@@ -91,17 +95,17 @@ function StatsPanel({ payload, coarse }: { payload: GameOverPayload; coarse: boo
   const score = useCountUp(stats.score, 600, 950)
 
   const rows: Array<{ label: string; value: React.ReactNode; cash?: boolean }> = [
-    { label: 'TEMPO DE FUGA', value: formatClock(time) },
-    { label: 'DISTÂNCIA PERCORRIDA', value: formatKm(dist) },
-    { label: 'DINHEIRO COLETADO', value: formatMoney(money), cash: true },
+    { label: t.game.over.rows[0], value: formatClock(time) },
+    { label: t.game.over.rows[1], value: formatKm(dist, t.locale) },
+    { label: t.game.over.rows[2], value: formatMoney(money, t.locale), cash: true },
     {
-      label: 'PROCURADO MÁXIMO',
+      label: t.game.over.rows[3],
       value: <WantedStars level={stats.maxWanted} size={20} />,
     },
-    { label: 'CARROS ROUBADOS', value: String(Math.round(cars)) },
+    { label: t.game.over.rows[4], value: String(Math.round(cars)) },
     /* O contrato RunStats não traz "pedestres assustados" (game-over.md §4);
        a 6ª estatística usa a pontuação final calculada pela engine. */
-    { label: 'PONTUAÇÃO', value: Math.round(score).toLocaleString('pt-BR') },
+    { label: t.game.over.rows[5], value: Math.round(score).toLocaleString(t.locale) },
   ]
 
   return (
@@ -115,7 +119,7 @@ function StatsPanel({ payload, coarse }: { payload: GameOverPayload; coarse: boo
             className="relative"
           >
             <span className="grad-vice inline-block rounded-full px-4 py-2 font-pixel text-[10px] uppercase tracking-[0.08em] text-night-950">
-              NOVO RECORDE!
+              {t.game.over.newRecord}
             </span>
             <StarConfetti count={coarse ? 16 : 24} />
           </motion.div>
@@ -129,13 +133,11 @@ function StatsPanel({ payload, coarse }: { payload: GameOverPayload; coarse: boo
         className="w-full rounded-[20px] border border-violet-haze p-6 backdrop-blur-[8px] sm:p-10"
         style={{ background: 'rgba(21,10,38,.9)' }}
       >
-        <SectionTag className="justify-center">RELATÓRIO DA FUGA</SectionTag>
+        <SectionTag className="justify-center">{t.game.over.report}</SectionTag>
 
         {/* stats zerados (morte em <10s) — chip de humor (§7) */}
         {stats.timeSec < 10 && (
-          <p className="mt-3 text-center text-sm text-text-dim">
-            Recorde de velocidade. Na direção errada.
-          </p>
+          <p className="mt-3 text-center text-sm text-text-dim">{t.game.over.speedRecord}</p>
         )}
 
         <motion.div
@@ -176,6 +178,7 @@ function StatsPanel({ payload, coarse }: { payload: GameOverPayload; coarse: boo
 
 /* ---------- overlay principal ---------------------------------------------- */
 export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayProps) {
+  const { t } = useLang()
   const navigate = useNavigate()
   const coarse = useCoarsePointer()
   const primaryRef = useRef<HTMLButtonElement>(null)
@@ -197,7 +200,7 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
           key={payload.kind}
           role="dialog"
           aria-modal="true"
-          aria-label={busted ? 'Fim de jogo: detido' : 'Fim de jogo: se deu mal'}
+          aria-label={busted ? t.game.over.bustedAria : t.game.over.wastedAria}
           data-allow-scroll
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -297,7 +300,7 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
             >
               {busted ? (
                 <h1
-                  data-text="DETIDO"
+                  data-text={t.game.over.busted}
                   className="gm-glitch gm-glitch-impact gm-glitch-police text-center font-display text-[clamp(72px,14vw,140px)] uppercase leading-none tracking-[0.01em]"
                   style={{
                     backgroundImage: 'linear-gradient(90deg,#FF3B3B,#3B82FF)',
@@ -309,7 +312,7 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
                       'drop-shadow(0 0 28px rgba(255,59,59,.5)) drop-shadow(0 0 28px rgba(59,130,255,.5))',
                   }}
                 >
-                  DETIDO
+                  {t.game.over.busted}
                 </h1>
               ) : (
                 <h1
@@ -322,7 +325,7 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
                     filter: 'drop-shadow(0 0 32px rgba(255,71,87,.55))',
                   }}
                 >
-                  SE DEU MAL
+                  {t.game.over.wasted}
                 </h1>
               )}
             </motion.div>
@@ -334,18 +337,18 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
               transition={{ duration: 0.3, delay: busted ? 0.55 : 0.6 }}
               className="mt-4 text-center font-sans text-2xl font-bold text-text-hi"
             >
-              {busted ? 'A polícia te pegou. A fuga acabou.' : 'Você foi destruído no meio do caos.'}
+              {busted ? t.game.over.bustedSub : t.game.over.wastedSub}
             </motion.p>
 
             {/* variante por causa da morte (§3) */}
-            {!busted && causeVariant(payload.cause) && (
+            {!busted && causeVariant(payload.cause, t.game.over) && (
               <motion.p
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.7 }}
                 className="mt-2 text-center text-sm text-text-dim"
               >
-                {causeVariant(payload.cause)}
+                {causeVariant(payload.cause, t.game.over)}
               </motion.p>
             )}
 
@@ -374,7 +377,7 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
                     onRestart()
                   }}
                 >
-                  Jogar Novamente
+                  {t.game.over.playAgain}
                 </button>
               </motion.div>
               <motion.div
@@ -386,7 +389,7 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
                   className="btn-secondary min-h-14 w-full"
                   onClick={() => navigate('/')}
                 >
-                  Voltar ao Início
+                  {t.game.over.backHome}
                 </button>
               </motion.div>
               <motion.div
@@ -395,8 +398,16 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
                 className="flex justify-center"
               >
                 <button type="button" className="btn-ghost" onClick={() => navigate('/como-jogar')}>
-                  Ver Como Jogar
+                  {t.game.over.seeHowTo}
                 </button>
+              </motion.div>
+              {/* idioma — perto dos botões */}
+              <motion.div
+                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+                transition={{ duration: 0.3 }}
+                className="flex justify-center pt-1"
+              >
+                <LangToggle />
               </motion.div>
             </motion.div>
 
@@ -406,18 +417,19 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
               transition={{ delay: 1.2, duration: 0.3 }}
               className="mt-4 text-center font-pixel text-[9px] uppercase tracking-[0.08em] text-text-dim"
             >
-              R — JOGAR NOVAMENTE
+              {t.game.over.rPlayAgain}
             </motion.p>
 
             {/* descrição para leitores de tela */}
             <span className="sr-only">
-              {`Estatísticas da fuga: tempo ${formatClock(payload.stats.timeSec)}, distância ${formatKm(
-                payload.stats.distanceKm,
-              )}, dinheiro coletado ${formatMoney(
-                payload.stats.moneyEarned,
-              )}, procurado máximo ${payload.stats.maxWanted} de 5 estrelas, carros roubados ${
-                payload.stats.carsStolen
-              }, pontuação ${payload.stats.score.toLocaleString('pt-BR')}.`}
+              {t.game.over.srStats(
+                formatClock(payload.stats.timeSec),
+                formatKm(payload.stats.distanceKm, t.locale),
+                formatMoney(payload.stats.moneyEarned, t.locale),
+                payload.stats.maxWanted,
+                payload.stats.carsStolen,
+                payload.stats.score.toLocaleString(t.locale),
+              )}
             </span>
           </motion.div>
         </motion.div>

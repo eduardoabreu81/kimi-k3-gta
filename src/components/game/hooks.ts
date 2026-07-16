@@ -98,15 +98,16 @@ export function formatClock(totalSec: number): string {
 }
 
 const brl = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 })
+const usd = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 
-/** `R$ 1.250` (pt-BR, game.md §4.1) */
-export function formatMoney(v: number): string {
-  return `R$ ${brl.format(Math.round(v))}`
+/** `R$ 1.250` (game.md §4.1) — locale vem do idioma ativo */
+export function formatMoney(v: number, locale = 'pt-BR'): string {
+  return `R$ ${(locale === 'en-US' ? usd : brl).format(Math.round(v))}`
 }
 
-/** `8,2 km` (game-over.md §4) */
-export function formatKm(v: number): string {
-  return `${v.toLocaleString('pt-BR', {
+/** `8,2 km` / `8.2 km` (game-over.md §4) */
+export function formatKm(v: number, locale = 'pt-BR'): string {
+  return `${v.toLocaleString(locale, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   })} km`
