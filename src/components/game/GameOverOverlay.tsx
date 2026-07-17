@@ -355,19 +355,12 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
             <StatsPanel payload={payload} coarse={coarse} />
 
             {/* ------- botões (§5) ------- */}
-            <motion.div
-              className="mt-7 flex w-full max-w-[560px] flex-col gap-3"
-              initial="hidden"
-              animate="show"
-              variants={{
-                hidden: {},
-                show: { transition: { staggerChildren: 0.07, delayChildren: 0.95 } },
-              }}
-            >
-              <motion.div
-                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-                transition={{ duration: 0.3 }}
-              >
+            {/* Botões: entrada via CSS (.gm-rise) — NUNCA depender de stagger
+                JS aqui: se o rAF é estrangulado (battery saver/aba de fundo),
+                variants do framer ficam travadas em opacity 0 e os botões
+                "não funcionam" (invisíveis). CSS animation sempre completa. */}
+            <div className="mt-7 flex w-full max-w-[560px] flex-col gap-3">
+              <div className="gm-rise" style={{ animationDelay: '0.95s' }}>
                 <button
                   ref={primaryRef}
                   type="button"
@@ -379,11 +372,8 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
                 >
                   {t.game.over.playAgain}
                 </button>
-              </motion.div>
-              <motion.div
-                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-                transition={{ duration: 0.3 }}
-              >
+              </div>
+              <div className="gm-rise" style={{ animationDelay: '1.02s' }}>
                 <button
                   type="button"
                   className="btn-secondary min-h-14 w-full"
@@ -391,25 +381,17 @@ export default function GameOverOverlay({ payload, onRestart }: GameOverOverlayP
                 >
                   {t.game.over.backHome}
                 </button>
-              </motion.div>
-              <motion.div
-                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-                transition={{ duration: 0.3 }}
-                className="flex justify-center"
-              >
+              </div>
+              <div className="gm-rise flex justify-center" style={{ animationDelay: '1.09s' }}>
                 <button type="button" className="btn-ghost" onClick={() => navigate('/como-jogar')}>
                   {t.game.over.seeHowTo}
                 </button>
-              </motion.div>
+              </div>
               {/* idioma — perto dos botões */}
-              <motion.div
-                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
-                transition={{ duration: 0.3 }}
-                className="flex justify-center pt-1"
-              >
+              <div className="gm-rise flex justify-center pt-1" style={{ animationDelay: '1.16s' }}>
                 <LangToggle />
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
 
             <motion.p
               initial={{ opacity: 0 }}

@@ -34,6 +34,7 @@ export interface HudState {
   splash: { text: string; sub?: string } | null;  // mensagem central grande
   toast: string | null;                            // mensagem pequena temporária
   hint: string | null;   // dica contextual, ex.: "Aperte E para roubar o carro"
+  objective: string | null; // objetivo persistente (missão de entrega), ex.: "Entregue o carro no ponto dourado"
   paused: boolean;
   muted: boolean;
   crt: boolean;          // modo CRT (scanlines) ligado

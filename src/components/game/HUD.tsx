@@ -182,6 +182,15 @@ export default function HUD({
               {formatClock(elapsedSec)}
             </span>
           </div>
+          {/* objetivo da missão (entrega): pill dourada pulsando */}
+          {hud.objective && (
+            <div className="gm-objective mt-2 flex items-center gap-1.5 rounded-full border border-[rgba(255,214,10,0.7)] bg-[rgba(13,6,24,0.72)] px-3 py-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#FFD60A]" />
+              <span className="font-pixel text-[8px] uppercase tracking-[0.08em] text-[#FFE88A]">
+                {hud.objective}
+              </span>
+            </div>
+          )}
         </motion.div>
 
         {/* tempo + ações (top-right) */}
@@ -195,6 +204,17 @@ export default function HUD({
               {formatClock(elapsedSec)}
             </span>
           </div>
+          {/* crédito Kimi sempre ativo na janela do jogo */}
+          <a
+            href="https://www.kimi.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="gm-hud-icon-btn"
+            aria-label={t.footer.kimi}
+            title={t.footer.kimi}
+          >
+            <img src="./kimi-k.svg" alt="" className="h-[18px] w-[18px]" aria-hidden="true" />
+          </a>
           <button
             type="button"
             className="gm-hud-icon-btn"

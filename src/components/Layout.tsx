@@ -5,6 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import KimiBadge from '@/components/KimiBadge'
 import { setLenis, getLenis } from '@/lib/scroll'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -52,6 +53,8 @@ export default function Layout() {
         <Outlet />
       </main>
       <Footer />
+      {/* crédito sempre visível (ícone na janela principal) */}
+      <KimiBadge />
     </div>
   )
 }

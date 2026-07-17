@@ -2,7 +2,7 @@
 // ============================================================================
 // GTA VI Mini — i18n (PT-BR / EN), sem dependências.
 // `LangProvider` (React context) + `useLang()` → { lang, setLang, t }.
-// Persiste em localStorage ('gtamini.lang'), default 'pt', sincroniza
+// Persiste em localStorage ('gtamini.lang'), default 'en', sincroniza
 // document.documentElement.lang ('pt-BR' / 'en') em runtime.
 // ============================================================================
 
@@ -162,7 +162,7 @@ const pt = {
     controls: {
       tag: 'CONTROLES',
       title: 'Duas mãos no teclado.',
-      lead: 'No celular, os controles viram um joystick na tela. Simples assim.',
+      lead: 'No celular, os controles viram um direcional na tela (▲▼◀▶) + botões de ação. Simples assim.',
       onFoot: 'A pé',
       driving: 'Dirigindo',
       or: 'ou',
@@ -309,7 +309,7 @@ const pt = {
         },
         {
           q: 'Funciona no celular?',
-          a: 'Sim. Os controles viram um joystick virtual e botões na tela. No teclado, a experiência é a clássica.',
+          a: 'Sim. Os controles viram um direcional (▲▼◀▶) e botões na tela. No teclado, a experiência é a clássica.',
         },
         {
           q: 'Meu progresso fica salvo?',
@@ -414,6 +414,11 @@ const pt = {
     },
     touch: {
       joystickAria: 'Joystick virtual: arraste para mover ou dirigir',
+      dpadGroup: 'Direcionais: mover e dirigir',
+      dUp: 'Para cima / acelerar',
+      dDown: 'Para baixo / ré',
+      dLeft: 'Virar à esquerda',
+      dRight: 'Virar à direita',
       brakeAria: 'Freio de mão',
       enterCarAria: 'Entrar no carro',
       exitCarAria: 'Sair do carro',
@@ -576,7 +581,7 @@ const en: Dict = {
     controls: {
       tag: 'CONTROLS',
       title: 'Two hands on the keyboard.',
-      lead: 'On mobile, the controls become an on-screen joystick. That simple.',
+      lead: 'On mobile, the controls become an on-screen D-pad (▲▼◀▶) + action buttons. That simple.',
       onFoot: 'On foot',
       driving: 'Driving',
       or: 'or',
@@ -723,7 +728,7 @@ const en: Dict = {
         },
         {
           q: 'Does it work on mobile?',
-          a: 'Yes. The controls become a virtual joystick and on-screen buttons. On a keyboard, it’s the classic experience.',
+          a: 'Yes. The controls become an on-screen D-pad (▲▼◀▶) and buttons. On a keyboard, it’s the classic experience.',
         },
         {
           q: 'Is my progress saved?',
@@ -828,6 +833,11 @@ const en: Dict = {
     },
     touch: {
       joystickAria: 'Virtual joystick: drag to move or drive',
+      dpadGroup: 'Directional pad: move and drive',
+      dUp: 'Up / accelerate',
+      dDown: 'Down / reverse',
+      dLeft: 'Steer left',
+      dRight: 'Steer right',
       brakeAria: 'Handbrake',
       enterCarAria: 'Enter the car',
       exitCarAria: 'Exit the car',
@@ -863,9 +873,9 @@ function readStoredLang(): Lang {
     const v = window.localStorage.getItem(STORAGE_KEY)
     if (v === 'pt' || v === 'en') return v
   } catch {
-    /* storage indisponível — default pt */
+    /* storage indisponível — cai no default */
   }
-  return 'pt'
+  return 'en' // idioma principal: inglês (pedido do usuário)
 }
 
 export function LangProvider({ children }: { children: ReactNode }) {

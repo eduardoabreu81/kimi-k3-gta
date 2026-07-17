@@ -527,3 +527,28 @@
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 }
+
+/* ---------- entrada dos botões de overlay (sempre completa, sem JS) ------- */
+.gm-rise {
+  opacity: 0;
+  animation: gm-rise-in 0.35s ease-out forwards;
+}
+@keyframes gm-rise-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gm-rise { animation: none; opacity: 1; }
+}
+
+/* ---------- pill de objetivo (missão de entrega) ---------- */
+.gm-objective {
+  animation: gm-objective-pulse 1.6s ease-in-out infinite;
+}
+@keyframes gm-objective-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255,214,10,0); }
+  50% { box-shadow: 0 0 14px rgba(255,214,10,0.35); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gm-objective { animation: none; }
+}

@@ -37,6 +37,7 @@ const DEFAULT_HUD: HudState = {
   splash: null,
   toast: null,
   hint: null,
+  objective: null,
   paused: false,
   muted: false,
   crt: false,

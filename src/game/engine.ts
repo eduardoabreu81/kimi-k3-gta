@@ -52,6 +52,10 @@ const CIV_PARKED = 10; // carros estacionados roubáveis
 const PICKUP_COUNT = 26; // notas de R$ espalhadas
 const PICKUP_VALUE = 250; // R$ por nota (game.md §4.1)
 const EVADE_REWARD_PER_STAR = 250; // recompensa por despistar
+const DELIVERY_BASE = 500; // R$ base por carro entregue
+const DELIVERY_PER_STAR = 150; // bônus por estrela de procurado no roubo
+const DELIVERY_RADIUS = 48; // raio da zona de entrega (px)
+const DELIVERY_MAX_SPEED = 40; // precisa estar quase parado p/ entregar (px/s)
 const KM_PER_PX = 1 / 800; // 800px do mundo = 1 km (mapa ≈ 2,56 km)
 const BEST_KEY = 'gtamini.recorde.score';
 const BEST_MONEY_KEY = 'gtamini.recorde.dinheiro';
@@ -75,6 +79,9 @@ const STRINGS = {
     hintSound: 'M — SOM',
     hintExit: 'E — SAIR DO CARRO',
     tooFastExit: 'MUITO RÁPIDO — FREIA PRIMEIRO!',
+    deliverStart: 'ENTREGUE O CARRO NO PONTO DOURADO',
+    delivered: 'CARRO ENTREGUE',
+    objectiveDeliver: 'Entregue o carro no ponto dourado',
     causes: {
       shot: 'alvejado pela polícia',
       surrounded: 'cercado pela polícia',
@@ -96,6 +103,9 @@ const STRINGS = {
     hintSound: 'M — SOUND',
     hintExit: 'E — EXIT CAR',
     tooFastExit: 'TOO FAST — BRAKE FIRST!',
+    deliverStart: 'DELIVER THE CAR TO THE GOLD MARKER',
+    delivered: 'CAR DELIVERED',
+    objectiveDeliver: 'Deliver the car to the gold marker',
     causes: {
       shot: 'shot by the police',
       surrounded: 'surrounded by the police',
@@ -113,8 +123,9 @@ type SplashMsg =
   | { id: 'wanted'; stars: number }
   | { id: 'gotAway'; sub: string }
   | { id: 'stealCar' }
-  | { id: 'lowHealth' };
-type ToastMsg = { id: 'flee' | 'outOfSight' | 'carStolen' | 'tooFastExit' };
+  | { id: 'lowHealth' }
+  | { id: 'delivered'; sub: string };
+type ToastMsg = { id: 'flee' | 'outOfSight' | 'carStolen' | 'tooFastExit' | 'deliverStart' };
 type HintMsg = 'hintSteal' | 'hintBrake' | 'hintSound' | 'hintExit';
 
 type Phase = 'playing' | 'paused' | 'gameover';
@@ -247,9 +258,36 @@ export const createGame: CreateGame = (opts) => {
     muted: audio.muted,
     crt: storageGet(CRT_KEY, '1') === '1',
     gameOver: null,
+    objective: null,
   };
   let hudLastSent = '';
   let hudAccum = 1; // força emissão no primeiro frame
+
+  // ── Missão de entrega (gameplay loop: roubou → entregou → próximo) ──────
+  let delivery: { x: number; y: number; reward: number } | null = null;
+
+  function spawnDelivery(car: Car): void {
+    const p = city.randomRoadPoint(700, car.x, car.y, 1400);
+    delivery = { x: p.x, y: p.y, reward: DELIVERY_BASE + DELIVERY_PER_STAR * wanted.level };
+    hud.objective = S.objectiveDeliver;
+    showToast({ id: 'deliverStart' }, 3.2);
+  }
+
+  function completeDelivery(): void {
+    if (!delivery) return;
+    const { x, y, reward } = delivery;
+    delivery = null;
+    hud.objective = null;
+    addMoney(reward, x, y);
+    showSplash({ id: 'delivered', sub: `+R$ ${reward}` }, 2.2);
+    audio.pickup();
+    audio.starDown();
+    // Lavou o carro: a poeira baixa (−1 estrela de procurado).
+    if (wanted.level > 0) {
+      wanted.level -= 1;
+      if (wanted.level === 0) wanted.reset();
+    }
+  }
   let hudForce = false;
   let splashT = 0;
   let toastT = 0;
@@ -272,6 +310,8 @@ export const createGame: CreateGame = (opts) => {
         return { text: S.stealCar };
       case 'lowHealth':
         return { text: S.lowHealth };
+      case 'delivered':
+        return { text: S.delivered, sub: m.sub };
     }
   }
 
@@ -421,6 +461,8 @@ export const createGame: CreateGame = (opts) => {
     hud.hint = null;
     hud.gameOver = null;
     hud.paused = false;
+    hud.objective = null;
+    delivery = null;
     splashMsg = null;
     toastMsg = null;
     hintMsg = null;
@@ -665,6 +707,8 @@ export const createGame: CreateGame = (opts) => {
       crime(1, 'carro');
       showToast({ id: 'carStolen' });
       peds.scareNear(car.x, car.y, 170);
+      // Loop de gameplay: cada carro roubado gera uma entrega (se não houver).
+      if (!delivery) spawnDelivery(car);
     }
     pushHud(true);
   }
@@ -732,7 +776,10 @@ export const createGame: CreateGame = (opts) => {
     hintMsg = null;
     if (kind === 'wasted') audio.explosion();
     else audio.busted();
-    audio.update(0, false, 0);
+    // Silêncio IMEDIATO e definitivo: setTargetAtTime aqui seria reescrito
+    // pelo audio.update() do MESMO tick (a fase já mudou, mas o restante do
+    // update() ainda roda) — era a sirene que ficava "só o tom" pra sempre.
+    audio.silence();
     pushHud(true);
   }
 
@@ -743,6 +790,12 @@ export const createGame: CreateGame = (opts) => {
 
     if (playerCar) updateDriving(dt, inp);
     else updateOnFoot(dt, inp);
+
+    // Entrega: parar dentro da zona dourada com o carro → paga e encerra.
+    if (delivery && playerCar) {
+      const near = dist2(playerCar.x, playerCar.y, delivery.x, delivery.y) < DELIVERY_RADIUS ** 2;
+      if (near && carSpeed(playerCar) < DELIVERY_MAX_SPEED) completeDelivery();
+    }
 
     // Tráfego civil (obstáculos: jogador + demais carros + viaturas + peds).
     const obstacles: Obstacle[] = [{ x: px(), y: py() }];
@@ -864,10 +917,14 @@ export const createGame: CreateGame = (opts) => {
     updateHudFields(dt);
 
     // Áudio contínuo: motor (pitch por velocidade) + sirene por proximidade.
-    const rpm = playerCar ? carSpeed(playerCar) / CAR_MAX_SPEED : 0;
-    const near = police.nearestDist(px(), py());
-    const siren = police.cops.length > 0 ? clamp(1 - near / 650, 0, 1) : 0;
-    audio.update(rpm, !!playerCar, siren);
+    // Se ESTE tick terminou em game over (busted/wasted), NÃO re-modula:
+    // o silence() do gameOver é a palavra final até restart.
+    if (phase === 'playing') {
+      const rpm = playerCar ? carSpeed(playerCar) / CAR_MAX_SPEED : 0;
+      const near = police.nearestDist(px(), py());
+      const siren = police.cops.length > 0 ? clamp(1 - near / 650, 0, 1) : 0;
+      audio.update(rpm, !!playerCar, siren);
+    }
 
     actionEdge = false;
   }
@@ -1161,6 +1218,48 @@ export const createGame: CreateGame = (opts) => {
       ctx.restore();
     }
 
+    // Zona de entrega: anel dourado pulsante + glow + chevron quicando.
+    if (delivery) {
+      const { x: dx, y: dy } = delivery;
+      const pulse = 0.5 + 0.5 * Math.sin(time * 4);
+      // glow de chão
+      const g = ctx.createRadialGradient(dx, dy, 4, dx, dy, DELIVERY_RADIUS + 26);
+      g.addColorStop(0, `rgba(255,214,10,${0.22 + 0.10 * pulse})`);
+      g.addColorStop(1, 'rgba(255,214,10,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(dx - DELIVERY_RADIUS - 26, dy - DELIVERY_RADIUS - 26, (DELIVERY_RADIUS + 26) * 2, (DELIVERY_RADIUS + 26) * 2);
+      // anel tracejado girando devagar
+      ctx.save();
+      ctx.translate(dx, dy);
+      ctx.rotate(time * 0.8);
+      ctx.strokeStyle = `rgba(255,214,10,${0.75 + 0.25 * pulse})`;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([14, 10]);
+      ctx.beginPath();
+      ctx.arc(0, 0, DELIVERY_RADIUS, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      // chevron ▼ quicando acima da zona
+      const bounce = Math.abs(Math.sin(time * 3.2)) * 8;
+      ctx.save();
+      ctx.translate(dx, dy - 34 - bounce);
+      ctx.fillStyle = '#FFD60A';
+      ctx.shadowColor = '#FFD60A';
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.moveTo(0, 8);
+      ctx.lineTo(-9, -5);
+      ctx.lineTo(-3, -5);
+      ctx.lineTo(-3, -12);
+      ctx.lineTo(3, -12);
+      ctx.lineTo(3, -5);
+      ctx.lineTo(9, -5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
     peds.draw(ctx, time);
 
     // Carros civis + viaturas + carro do jogador.
@@ -1347,6 +1446,12 @@ export const createGame: CreateGame = (opts) => {
     for (const cop of police.cops) {
       blip(cop.car.x, cop.car.y, 5, sirenPhase === 0 ? '#FF3B3B' : '#3B82FF');
     }
+    // Blip da entrega: dourado, maior, pulsando (objetivo atual).
+    if (delivery) {
+      const a = 0.55 + 0.45 * Math.sin(time * 4);
+      blip(delivery.x, delivery.y, 5.5, `rgba(255,214,10,${a})`);
+      blip(delivery.x, delivery.y, 2.5, '#FFF3BF');
+    }
 
     // Blip do jogador: seta teal rotacionando com o heading (sempre no centro).
     const heading = playerCar ? playerCar.angle : player.angle;
@@ -1417,7 +1522,7 @@ export const createGame: CreateGame = (opts) => {
       hud.paused = true;
       hud.hint = null;
       hintMsg = null;
-      audio.update(0, false, 0);
+      audio.silence();
       pushHud(true);
     },
     resume(): void {
@@ -1465,6 +1570,7 @@ export const createGame: CreateGame = (opts) => {
       }
       if (toastMsg) hud.toast = S[toastMsg.id];
       if (hintMsg) hud.hint = S[hintMsg];
+      hud.objective = delivery ? S.objectiveDeliver : null;
       if (hud.gameOver && gameOverCause) {
         hud.gameOver = { ...hud.gameOver, cause: S.causes[gameOverCause] };
       }

@@ -16,13 +16,19 @@ const WALK_SPEED = 52;
 const PANIC_SPEED = 168;
 const SCARE_RADIUS = 150;
 
-/** Corpo + cabeça (tom mais claro), paleta §2.3. */
-const PALETAS = [
-  ['#FFB347', '#FFD28A'],
-  ['#C9B8E8', '#E3D8F5'],
-  ['#7CFF6B', '#B4FFA8'],
-  ['#FF6BB0', '#FFA3CD'],
-] as const;
+/**
+ * Bonequinhos vistos de cima: camisa (corpo), pele (rosto/braços), cabelo
+ * (metade de trás da cabeça) e calça (perninhas). Paleta §2.3 expandida.
+ */
+const PALETAS: ReadonlyArray<readonly [string, string, string, string]> = [
+  // camisa     pele       cabelo     calça
+  ['#FFB347', '#F2C094', '#4A2E1F', '#3D4A6B'], // laranja / cabelo castanho
+  ['#C9B8E8', '#E8B08A', '#1E1A26', '#4E4460'], // lilás / cabelo preto
+  ['#7CFF6B', '#C98A5E', '#2E1A10', '#37424E'], // verde / pele morena
+  ['#FF6BB0', '#F5D7B0', '#7A4A1E', '#5B3A54'], // rosa / loira
+  ['#5EC8F2', '#8A5A3B', '#141018', '#2E3A52'], // azul / pele negra
+  ['#FFE066', '#F2C094', '#B03A2E', '#3E4A3A'], // amarelo / ruiva
+];
 
 export interface Ped {
   x: number;
@@ -30,8 +36,10 @@ export interface Ped {
   vx: number;
   vy: number;
   angle: number;
-  body: string;
-  head: string;
+  shirt: string;
+  skin: string;
+  hair: string;
+  pants: string;
   state: 'walk' | 'panic' | 'down';
   panicT: number;
   downT: number;
@@ -60,15 +68,17 @@ export class PedestrianManager {
     for (let tries = 0; tries < 12 && dist2(p.x, p.y, px, py) < 500 * 500; tries++) {
       p = this.city.randomSidewalkPoint();
     }
-    const [body, head] = PALETAS[randInt(0, PALETAS.length - 1)];
+    const [shirt, skin, hair, pants] = PALETAS[randInt(0, PALETAS.length - 1)];
     return {
       x: p.x,
       y: p.y,
       vx: 0,
       vy: 0,
       angle: rand(0, Math.PI * 2),
-      body,
-      head,
+      shirt,
+      skin,
+      hair,
+      pants,
       state: 'walk',
       panicT: 0,
       downT: 0,
@@ -181,7 +191,8 @@ export class PedestrianManager {
   draw(ctx: CanvasRenderingContext2D, time: number): void {
     for (const ped of this.peds) {
       const lying = ped.state === 'down';
-      const bobY = !lying && (Math.abs(ped.vx) + Math.abs(ped.vy) > 4) ? Math.sin(ped.bob) * 2 : 0;
+      const moving = Math.abs(ped.vx) + Math.abs(ped.vy) > 4;
+      const bobY = !lying && moving ? Math.sin(ped.bob) * 1.4 : 0;
       ctx.save();
       ctx.globalAlpha = ped.alpha;
       ctx.translate(ped.x, ped.y + bobY);
@@ -190,15 +201,42 @@ export class PedestrianManager {
       ctx.beginPath();
       ctx.ellipse(1.5, 3.5, 6, 4, 0, 0, Math.PI * 2);
       ctx.fill();
-      // Cápsula 10×16 (deitada 90° quando derrubado).
+      // Bonequinho top-down (deitado 90° quando derrubado). Frente = +x:
+      // perninhas atrás alternando, bracinhos nos lados, rosto na frente,
+      // cabelo na metade de trás da cabeça.
+      const swing = lying || !moving ? 0 : Math.sin(ped.bob) * 2.2;
       ctx.rotate(lying ? ped.angle + Math.PI / 2 : ped.angle);
-      ctx.fillStyle = ped.body;
+      // Perninhas + sapatos (atrás, -x), alternando com o passo.
+      ctx.fillStyle = ped.pants;
       ctx.beginPath();
-      ctx.roundRect(-5, -8, 10, 16, 5);
+      ctx.roundRect(-6.5 + swing, -4.6, 4.4, 3.6, 1.6);
+      ctx.roundRect(-6.5 - swing, 1.0, 4.4, 3.6, 1.6);
       ctx.fill();
-      ctx.fillStyle = ped.head;
+      ctx.fillStyle = '#241F33';
       ctx.beginPath();
-      ctx.arc(0, -3, 3, 0, Math.PI * 2);
+      ctx.roundRect(-8.6 + swing, -4.6, 2.4, 3.6, 1.2);
+      ctx.roundRect(-8.6 - swing, 1.0, 2.4, 3.6, 1.2);
+      ctx.fill();
+      // Bracinhos (lados, ±y) balançando ao contrário das pernas.
+      ctx.fillStyle = ped.skin;
+      ctx.beginPath();
+      ctx.arc(-swing * 0.7 + 0.5, -7.2, 2, 0, Math.PI * 2);
+      ctx.arc(swing * 0.7 + 0.5, 7.2, 2, 0, Math.PI * 2);
+      ctx.fill();
+      // Corpinho: ombros largos na perpendicular (camisa).
+      ctx.fillStyle = ped.shirt;
+      ctx.beginPath();
+      ctx.roundRect(-5.5, -6, 10.5, 12, 4.5);
+      ctx.fill();
+      // Rosto (pele) na frente (+x) + cabelo cobrindo a metade de trás.
+      ctx.fillStyle = ped.skin;
+      ctx.beginPath();
+      ctx.arc(1.4, 0, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = ped.hair;
+      ctx.beginPath();
+      ctx.arc(1.4, 0, 3.7, Math.PI * 0.52, Math.PI * 1.48);
+      ctx.closePath();
       ctx.fill();
       ctx.restore();
 

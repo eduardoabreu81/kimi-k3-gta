@@ -101,22 +101,45 @@ export class Player {
     ctx.beginPath();
     ctx.ellipse(2, 4, 7, 5, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Cápsula teal com glow (a assinatura do jogador a pé).
+    // Bonequinho top-down teal com glow (assinatura do jogador a pé):
+    // perninhas/bracinhos balançando, rosto na frente, cabelo atrás.
+    const swing = this.speed > 10 ? Math.sin(this.bob) * 2.2 : 0;
     ctx.rotate(this.angle);
     ctx.shadowColor = '#00E5C7';
     ctx.shadowBlur = 12;
+    // Perninhas + tênis (atrás, alternando).
+    ctx.fillStyle = '#0B4A41';
+    ctx.beginPath();
+    ctx.roundRect(-6.5 + swing, -4.6, 4.4, 3.6, 1.6);
+    ctx.roundRect(-6.5 - swing, 1.0, 4.4, 3.6, 1.6);
+    ctx.fill();
+    ctx.fillStyle = '#E8FBF6';
+    ctx.beginPath();
+    ctx.roundRect(-8.6 + swing, -4.6, 2.4, 3.6, 1.2);
+    ctx.roundRect(-8.6 - swing, 1.0, 2.4, 3.6, 1.2);
+    ctx.fill();
+    // Bracinhos (pele) nos lados.
+    ctx.fillStyle = '#F2C094';
+    ctx.beginPath();
+    ctx.arc(-swing * 0.7 + 0.5, -7.2, 2, 0, Math.PI * 2);
+    ctx.arc(swing * 0.7 + 0.5, 7.2, 2, 0, Math.PI * 2);
+    ctx.fill();
+    // Corpinho teal (ombros largos).
     ctx.fillStyle = '#00E5C7';
     ctx.beginPath();
-    ctx.roundRect(-5, -8, 10, 16, 5);
+    ctx.roundRect(-5.5, -6, 10.5, 12, 4.5);
     ctx.fill();
     ctx.shadowBlur = 0;
-    // Cabeça em tom mais claro + nariz indicando a direção.
-    ctx.fillStyle = '#8FF5E4';
+    // Rosto + cabelo (metade de trás).
+    ctx.fillStyle = '#F2C094';
     ctx.beginPath();
-    ctx.arc(0, -2, 3.4, 0, Math.PI * 2);
+    ctx.arc(1.4, 0, 3.5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#0D6E60';
-    ctx.fillRect(3.5, -3, 2.4, 2.4);
+    ctx.fillStyle = '#20302C';
+    ctx.beginPath();
+    ctx.arc(1.4, 0, 3.7, Math.PI * 0.52, Math.PI * 1.48);
+    ctx.closePath();
+    ctx.fill();
     ctx.restore();
 
     // Anel de glow pulsante bem sutil sob o jogador (legibilidade noturna).

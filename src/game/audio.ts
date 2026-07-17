@@ -85,6 +85,21 @@ export class GameAudio {
     this.sirOsc.start();
   }
 
+  /**
+   * Silêncio IMEDIATO dos canais contínuos (motor + sirene). Usado em
+   * gameOver/pause: cancela automações pendentes e zera os gains — sem
+   * depender de um próximo update() que pode nunca chegar (fase gameover).
+   */
+  silence(): void {
+    if (!this.ac) return;
+    const t = this.ac.currentTime;
+    for (const g of [this.engGain, this.sirGain]) {
+      if (!g) continue;
+      g.gain.cancelScheduledValues(t);
+      g.gain.setTargetAtTime(0, t, 0.04);
+    }
+  }
+
   setMuted(m: boolean): void {
     this.muted = m;
     storageSet(MUTE_KEY, m ? '0' : '1');
