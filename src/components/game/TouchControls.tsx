@@ -1,4 +1,5 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { TouchInput } from '@/game/types'
 import { useLang } from '@/i18n'
@@ -6,16 +7,17 @@ import { cn } from '@/lib/utils'
 import { useCoarsePointer } from './hooks'
 
 /* ============================================================================
-   TouchControls — D-pad de 4 direcionais (▲▼◀▶) bottom-left, MESMO esquema
-   a pé e dirigindo (pedido do usuário: "apenas os direcionais, da mesma
-   forma que controlamos o humano") + botões bottom-right: E/AÇÃO (72px,
-   primário) e FREIO (64px, só dirigindo). Cada botão captura seu próprio
-   pointer → multi-touch funciona (andar + frear ao mesmo tempo). Tudo vira
-   handle.setTouchInput() com estado mesclado.
+   TouchControls — game.md §8. Só aparece com pointer: coarse (escondido em
+   desktop). Joystick virtual bottom-left (base 112px, thumb 48px grad-vice)
+   + botões de ação bottom-right em coluna: E/AÇÃO (72px, primário) e FREIO
+   (64px, secundário, só quando dirigindo). Tudo vira handle.setTouchInput()
+   (mesclado: joystick + botões convivem em multi-touch).
    ========================================================================== */
 
-const DPAD = 54 // px por botão direcional (alvo touch ≥ 44px)
-const GAP = 6 // px entre botões do D-pad
+const BASE = 112 // px
+const THUMB = 48 // px
+const MAX_OFFSET = (BASE - THUMB) / 2 // 32px de curso do thumb
+const DEAD_ZONE = 12 // px — abaixo disso, neutro
 
 export interface TouchControlsProps {
   inVehicle: boolean
@@ -31,20 +33,11 @@ function vibrate(ms: number) {
   }
 }
 
-type DirKey = 'up' | 'down' | 'left' | 'right'
-
-const ARROWS: Record<DirKey, string> = {
-  up: '▲',
-  down: '▼',
-  left: '◀',
-  right: '▶',
-}
-
 export default function TouchControls({ inVehicle, onInput }: TouchControlsProps) {
   const { t } = useLang()
   const coarse = useCoarsePointer()
 
-  /* estado mesclado de todos os ponteiros (D-pad + botões) */
+  /* estado mesclado de todos os ponteiros (joystick + botões) */
   const inputRef = useRef<TouchInput>({})
   const emit = useCallback(
     (patch: Partial<TouchInput>) => {
@@ -54,55 +47,84 @@ export default function TouchControls({ inVehicle, onInput }: TouchControlsProps
     [onInput],
   )
 
-  const press = (key: keyof TouchInput, down: boolean) => {
+  /* ---------------- joystick ---------------- */
+  const baseRef = useRef<HTMLDivElement>(null)
+  const joyPointer = useRef<number | null>(null)
+  const [thumb, setThumb] = useState({ x: 0, y: 0 })
+
+  const updateJoystick = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const base = baseRef.current
+    if (!base) return
+    const rect = base.getBoundingClientRect()
+    let dx = e.clientX - (rect.left + rect.width / 2)
+    let dy = e.clientY - (rect.top + rect.height / 2)
+    const len = Math.hypot(dx, dy)
+    if (len > MAX_OFFSET) {
+      dx = (dx / len) * MAX_OFFSET
+      dy = (dy / len) * MAX_OFFSET
+    }
+    setThumb({ x: dx, y: dy })
+    emit({
+      up: dy < -DEAD_ZONE,
+      down: dy > DEAD_ZONE,
+      left: dx < -DEAD_ZONE,
+      right: dx > DEAD_ZONE,
+    })
+  }
+
+  const releaseJoystick = () => {
+    joyPointer.current = null
+    setThumb({ x: 0, y: 0 })
+    emit({ up: false, down: false, left: false, right: false })
+  }
+
+  /* ---------------- botões ---------------- */
+  const press = (key: 'action' | 'brake', down: boolean) => {
     if (down) vibrate(10)
     emit({ [key]: down } as Partial<TouchInput>)
   }
 
   if (!coarse) return null
 
-  const dirBtn = (key: DirKey, aria: string) => (
-    <button
-      key={key}
-      type="button"
-      aria-label={aria}
-      className={cn(
-        'gm-dpad-btn flex items-center justify-center rounded-xl border border-teal-neon/60',
-        'bg-[rgba(13,6,24,0.55)] text-teal-neon backdrop-blur-[2px]',
-        'active:scale-95 active:border-teal-neon active:bg-[rgba(0,229,199,0.18)]',
-      )}
-      style={{ width: DPAD, height: DPAD, touchAction: 'none' }}
-      onPointerDown={(e) => {
-        e.currentTarget.setPointerCapture(e.pointerId)
-        press(key, true)
-      }}
-      onPointerUp={() => press(key, false)}
-      onPointerCancel={() => press(key, false)}
-      onLostPointerCapture={() => press(key, false)}
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      <span className="pointer-events-none text-base leading-none">{ARROWS[key]}</span>
-    </button>
-  )
-
   return (
     <>
-      {/* D-pad (bottom-left): mesma leitura a pé e no carro */}
+      {/* joystick virtual (bottom-left) */}
       <div
-        role="group"
-        aria-label={t.game.touch.dpadGroup}
-        className="fixed left-3 z-20 grid"
+        ref={baseRef}
+        role="application"
+        aria-label={t.game.touch.joystickAria}
+        className="gm-joystick-base fixed left-3 z-20"
         style={{
+          width: BASE,
+          height: BASE,
           bottom: 'max(12px, env(safe-area-inset-bottom))',
-          gridTemplateColumns: `repeat(3, ${DPAD}px)`,
-          gridTemplateRows: `repeat(3, ${DPAD}px)`,
-          gap: GAP,
         }}
+        onPointerDown={(e) => {
+          if (joyPointer.current != null) return
+          joyPointer.current = e.pointerId
+          e.currentTarget.setPointerCapture(e.pointerId)
+          updateJoystick(e)
+        }}
+        onPointerMove={(e) => {
+          if (joyPointer.current !== e.pointerId) return
+          updateJoystick(e)
+        }}
+        onPointerUp={(e) => {
+          if (joyPointer.current === e.pointerId) releaseJoystick()
+        }}
+        onPointerCancel={(e) => {
+          if (joyPointer.current === e.pointerId) releaseJoystick()
+        }}
+        onContextMenu={(e) => e.preventDefault()}
       >
-        <div style={{ gridColumn: 2, gridRow: 1 }}>{dirBtn('up', t.game.touch.dUp)}</div>
-        <div style={{ gridColumn: 1, gridRow: 2 }}>{dirBtn('left', t.game.touch.dLeft)}</div>
-        <div style={{ gridColumn: 3, gridRow: 2 }}>{dirBtn('right', t.game.touch.dRight)}</div>
-        <div style={{ gridColumn: 2, gridRow: 3 }}>{dirBtn('down', t.game.touch.dDown)}</div>
+        <div
+          className="gm-joystick-thumb"
+          style={{
+            width: THUMB,
+            height: THUMB,
+            transform: `translate(calc(-50% + ${thumb.x}px), calc(-50% + ${thumb.y}px))`,
+          }}
+        />
       </div>
 
       {/* botões de ação (bottom-right, coluna) */}
