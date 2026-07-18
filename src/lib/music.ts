@@ -90,6 +90,9 @@ class RadioPlayer {
   private playing = false;
   private trackName: string | null = null;
   private lastUrl: string | null = null;
+  /** true quando a reprodução já começou de fato — gestos futuros não interferem
+      mais (senão qualquer clique retomaria a música com o rádio pausado). */
+  private unlocked = false;
   private listeners = new Set<() => void>();
   private snap: RadioSnapshot = this.buildSnap();
 
@@ -153,18 +156,51 @@ class RadioPlayer {
     this.lastUrl = track.url;
     this.trackName = track.name;
     this.playing = true;
-    // Se o navegador bloquear (sem gesto ainda), o próximo unlock() tenta de novo.
-    a.play().catch(() => {
-      this.playing = false;
-      this.emit();
-    });
+    a.play()
+      .then(() => {
+        this.unlocked = true;
+      })
+      .catch(() => {
+        // Se o navegador bloquear (sem gesto ainda), o próximo unlock() tenta de novo.
+        this.playing = false;
+        this.emit();
+      });
     this.emit();
   }
 
-  /** Primeiro gesto do usuário (autoplay policy): liga a estação salva. */
+  /** Primeiro gesto do usuário (autoplay policy): liga a estação salva.
+      Depois de destravado uma vez, gestos NÃO retomam um pause explícito. */
   unlock(): void {
-    if (this.playing || !this.station) return;
+    if (this.unlocked || this.playing || !this.station) return;
     this.playCurrent();
+  }
+
+  /** Pausa mantendo estação e faixa — resume() volta de onde parou. */
+  pause(): void {
+    if (!this.playing) return;
+    if (this.audio) this.audio.pause();
+    this.playing = false;
+    this.emit();
+  }
+
+  /** Retoma a faixa pausada; se a estação nunca tocou, sorteia uma faixa. */
+  resume(): void {
+    if (this.playing || !this.station) return;
+    if (this.audio && this.trackName != null) {
+      this.playing = true;
+      this.audio.play()
+        .then(() => {
+          this.unlocked = true;
+        })
+        .catch(() => {
+          // Autoplay policy: se bloquear, o próximo gesto/botão tenta de novo.
+          this.playing = false;
+          this.emit();
+        });
+      this.emit();
+    } else {
+      this.playCurrent();
+    }
   }
 
   /** Troca de estação; clicar na estação ATIVA desliga a rádio (estilo GTA). */

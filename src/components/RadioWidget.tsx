@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router'
-import { Radio as RadioIcon, SkipForward } from 'lucide-react'
+import { Pause, Play, Radio as RadioIcon, SkipForward } from 'lucide-react'
 import { STATION_IDS, initRadioGestures, radio, useRadio } from '@/lib/music'
 import { useLang } from '@/i18n'
 import { cn } from '@/lib/utils'
@@ -8,10 +8,11 @@ import { cn } from '@/lib/utils'
 /* ============================================================================
    RadioWidget — pill flutuante com as 3 estações da rádio (estilo GTA).
    Global (montada no App, fora das rotas): toca no site e no /jogar sem
-   reiniciar. Botões pequenos (pedido do usuário): ELE/ROK/SYN em font-pixel;
-   clicar na estação ativa desliga. Nome da faixa e botão "pular" só aparecem
-   enquanto toca. No /jogar sobe para não cobrir joystick/botões touch nem o
-   hint/toast do HUD; fica sob os overlays (pause/game over, z-50).
+   reiniciar. Botões pequenos (pedido do usuário): play/pause explícito
+   (mantém estação e faixa), ELE/ROK/SYN em font-pixel (clicar na ativa
+   desliga a rádio) e "pular" enquanto há estação ligada. No /jogar sobe
+   para não cobrir joystick/botões touch nem o hint/toast do HUD; fica sob
+   os overlays (pause/game over, z-50).
    ========================================================================== */
 
 export default function RadioWidget() {
@@ -42,8 +43,34 @@ export default function RadioWidget() {
           aria-hidden="true"
           className={cn('mx-0.5 shrink-0', state.playing ? 'text-teal-neon' : 'text-text-dim')}
         />
-        {state.playing && state.trackName && (
-          <span className="mr-0.5 hidden max-w-[130px] truncate font-sans text-[11px] text-text-mid md:inline">
+        {/* play/pause explícito — pausar mantém estação e faixa (não desliga) */}
+        {state.station && (
+          <button
+            type="button"
+            onClick={() => (state.playing ? radio.pause() : radio.resume())}
+            aria-label={state.playing ? t.radio.pauseAria : t.radio.playAria}
+            title={state.playing ? t.radio.pauseAria : t.radio.playAria}
+            className={cn(
+              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors',
+              state.playing
+                ? 'text-teal-neon hover:text-text-hi'
+                : 'text-text-dim hover:text-teal-neon',
+            )}
+          >
+            {state.playing ? (
+              <Pause size={13} aria-hidden="true" />
+            ) : (
+              <Play size={13} aria-hidden="true" />
+            )}
+          </button>
+        )}
+        {state.trackName && (
+          <span
+            className={cn(
+              'mr-0.5 hidden max-w-[130px] truncate font-sans text-[11px] text-text-mid md:inline',
+              !state.playing && 'opacity-60',
+            )}
+          >
             {state.trackName}
           </span>
         )}
@@ -59,7 +86,13 @@ export default function RadioWidget() {
               onClick={() => radio.setStation(id)}
               aria-pressed={active}
               aria-label={meta.aria}
-              title={empty ? `${meta.name} — ${t.radio.empty}` : meta.name}
+              title={
+                empty
+                  ? `${meta.name} — ${t.radio.empty}`
+                  : active
+                    ? `${meta.name} — ${t.radio.offHint}`
+                    : meta.name
+              }
               className={cn(
                 'min-w-[34px] rounded-full px-1.5 py-1.5 font-pixel text-[8px] uppercase leading-none tracking-[0.06em] transition-colors',
                 active
@@ -72,7 +105,7 @@ export default function RadioWidget() {
             </button>
           )
         })}
-        {state.playing && (
+        {state.station && (
           <button
             type="button"
             onClick={() => radio.next()}

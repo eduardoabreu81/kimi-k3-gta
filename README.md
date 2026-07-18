@@ -75,9 +75,10 @@ The floating radio widget (GTA style) has 3 stations — **ELE** (electronic),
 To add music, drop audio files into `src/assets/music/<station>/`
 (`.mp3` / `.ogg` / `.wav` / `.m4a` / `.flac`) and rebuild — tracks are
 discovered at build time (`import.meta.glob`), shuffled without repeats, and
-the station choice persists in the browser. Click the active station to turn
-the radio off; stations with no files show up disabled. The game SFX mute
-(**M**) is independent of the radio.
+the station choice persists in the browser. The widget has an explicit
+**play/pause** button (pause keeps the track position); clicking the active
+station turns the radio off completely, and stations with no files show up
+disabled. The game SFX mute (**M**) is independent of the radio.
 
 ## Deployment
 

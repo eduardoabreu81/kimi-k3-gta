@@ -30,7 +30,10 @@ const pt = {
   radio: {
     groupAria: 'Rádio — estações de música',
     skipAria: 'Próxima música',
+    playAria: 'Tocar música',
+    pauseAria: 'Pausar música',
     empty: 'sem faixas',
+    offHint: 'clique de novo para desligar',
     stations: {
       eletronica: { label: 'ELE', name: 'Eletrônica', aria: 'Estação Eletrônica' },
       rock: { label: 'ROK', name: 'Rock', aria: 'Estação Rock' },
@@ -459,7 +462,10 @@ const en: Dict = {
   radio: {
     groupAria: 'Radio — music stations',
     skipAria: 'Next track',
+    playAria: 'Play music',
+    pauseAria: 'Pause music',
     empty: 'no tracks',
+    offHint: 'click again to turn off',
     stations: {
       eletronica: { label: 'ELE', name: 'Electronic', aria: 'Electronic station' },
       rock: { label: 'ROK', name: 'Rock', aria: 'Rock station' },

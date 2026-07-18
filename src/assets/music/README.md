@@ -26,8 +26,9 @@ Each subfolder is a GTA-style **radio station** in the game:
   (e.g. `04 - Night Drive.mp3` shows as "Night Drive" — leading track
   numbers are stripped).
 - The chosen station is persisted in the browser
-  (`localStorage` key `gtamini.radio`); clicking the active station turns
-  the radio off.
+  (`localStorage` key `gtamini.radio`); the widget has an explicit
+  **play/pause** button (pause keeps the station and the track position),
+  and clicking the active station turns the radio off completely.
 - Stations with **no files** show up disabled in the widget.
 - The in-game **M** mute only affects sound effects, not the radio.
 
