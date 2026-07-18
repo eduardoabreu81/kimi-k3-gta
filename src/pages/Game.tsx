@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 // contrato src/game/types.ts (CreateGame). O import quebra o tsc até o merge —
 // esperado.
 import { createGame } from '@/game/engine'
-import type { GameHandle, GameOverPayload, HudState } from '@/game/types'
+import type { GameHandle, HudState } from '@/game/types'
 import { useLang } from '@/i18n'
 import HUD from '@/components/game/HUD'
 import PauseMenu from '@/components/game/PauseMenu'
@@ -55,28 +55,19 @@ export default function Game() {
   const [elapsedSec, setElapsedSec] = useState(0)
   /** countdown 3·2·1 ao retomar (game.md §6); null = sem countdown */
   const [resuming, setResuming] = useState<number | null>(null)
-  /** game over local do "Desistir da fuga" (game.md §6 → DETIDO) */
-  const [surrenderOver, setSurrenderOver] = useState<GameOverPayload | null>(null)
 
   const reduceMotion = useReducedMotionPref()
   const { lang, t } = useLang()
 
   const hudRef = useRef(hud)
-  const elapsedRef = useRef(elapsedSec)
   const resumingRef = useRef(resuming)
-  const surrenderRef = useRef(surrenderOver)
-  const tRef = useRef(t)
   useEffect(() => {
     hudRef.current = hud
-    elapsedRef.current = elapsedSec
     resumingRef.current = resuming
-    surrenderRef.current = surrenderOver
-    tRef.current = t
   })
-  const maxWantedRef = useRef(0)
 
-  const gameOver: GameOverPayload | null = surrenderOver ?? hud.gameOver
-  const gameOverNow = () => surrenderRef.current != null || hudRef.current.gameOver != null
+  const gameOver = hud.gameOver
+  const gameOverNow = () => hudRef.current.gameOver != null
 
   /* ---------------- ciclo de vida da engine (único useEffect) ------------- */
   useEffect(() => {
@@ -139,14 +130,8 @@ export default function Game() {
     }
   }, [])
 
-  /* ---------------- procurado máximo visto (stats do "Desistir") ---------- */
-  useEffect(() => {
-    if (hud.wanted > maxWantedRef.current) maxWantedRef.current = hud.wanted
-  }, [hud.wanted])
-
   /* ---------------- relógio da corrida (HudState não traz tempo) ---------- */
-  const clockRunning =
-    ready && !hud.paused && !hud.gameOver && surrenderOver == null && resuming == null
+  const clockRunning = ready && !hud.paused && !hud.gameOver && resuming == null
   useEffect(() => {
     if (!clockRunning) return
     const id = window.setInterval(() => setElapsedSec((s) => s + 1), 1000)
@@ -188,9 +173,7 @@ export default function Game() {
   const restart = useCallback(() => {
     handleRef.current?.restart()
     handleRef.current?.resume() // garante saída do pause (no-op se já correndo)
-    setSurrenderOver(null)
     setResuming(null)
-    maxWantedRef.current = 0
     setElapsedSec(0)
     canvasRef.current?.focus()
   }, [])
@@ -202,51 +185,10 @@ export default function Game() {
     [],
   )
 
-  /* "Desistir da fuga" (game.md §6): se entregar → game over DETIDO.
-     O contrato GameHandle não expõe surrender(), então a UI monta o payload
-     com o que enxerga (dinheiro/tempo/procurado máximo local). */
+  /* "Desistir da fuga" (game.md §6): a ENGINE resolve — game over real
+     (DETIDO) com stats reais da corrida, pausa de áudio e fase gameover. */
   const surrender = useCallback(() => {
-    // Caminho preferido: a ENGINE resolve (pausa áudio, stats reais, fase gameover)
-    if (handleRef.current?.surrender) {
-      handleRef.current.surrender()
-      return
-    }
-    // Fallback local: fabrica o payload E pausa a engine — senão o jogo
-    // (e o motor do áudio) continuam rodando atrás do overlay.
-    handleRef.current?.pause()
-    const h = hudRef.current
-    const timeSec = elapsedRef.current
-    const money = h.money
-    let bestMoney = 0
-    let bestTime = 0
-    try {
-      bestMoney = Number(window.localStorage.getItem('gtamini.recorde.dinheiro') ?? 0) || 0
-      bestTime = Number(window.localStorage.getItem('gtamini.recorde.tempo') ?? 0) || 0
-    } catch {
-      /* storage indisponível */
-    }
-    const isRecord = money > bestMoney || timeSec > bestTime
-    try {
-      if (money > bestMoney)
-        window.localStorage.setItem('gtamini.recorde.dinheiro', String(money))
-      if (timeSec > bestTime) window.localStorage.setItem('gtamini.recorde.tempo', String(timeSec))
-    } catch {
-      /* storage indisponível */
-    }
-    setSurrenderOver({
-      kind: 'busted',
-      cause: tRef.current.game.surrenderCause,
-      stats: {
-        timeSec,
-        moneyEarned: money,
-        carsStolen: 0,
-        maxWanted: Math.max(maxWantedRef.current, h.wanted),
-        distanceKm: 0,
-        score: money,
-      },
-      best: Math.max(bestMoney, bestTime),
-      isRecord,
-    })
+    handleRef.current?.surrender?.()
   }, [])
 
   /* ---------------- teclado global da UI: ESC / M / R ---------------------- */

@@ -30,6 +30,8 @@ export interface GameOverOverlayProps {
 
 const buzz = (ms: number) => {
   try {
+    // mesma preferência dos TouchControls: '0' = vibração desligada
+    if (window.localStorage.getItem('gtamini.cfg.vibracao') === '0') return
     navigator.vibrate?.(ms)
   } catch {
     /* sem suporte a vibração — ignora */

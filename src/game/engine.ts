@@ -24,6 +24,9 @@ import {
   storageGet,
   storageSet,
   storageGetInt,
+  prefersReducedMotion,
+  readReducedMotionOverride,
+  REDUCE_MOTION_EVENT,
 } from './util';
 import { City, SIZE } from './city';
 import { Player } from './player';
@@ -193,7 +196,8 @@ export const createGame: CreateGame = (opts) => {
   let vignette: CanvasGradient | null = null;
 
   const reducedMotionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let reducedMotion = reducedMotionMq.matches;
+  // Override do menu de pausa (util.prefersReducedMotion) tem prioridade sobre o SO.
+  let reducedMotion = prefersReducedMotion();
 
   const audio = new GameAudio();
   const city = new City();
@@ -401,6 +405,11 @@ export const createGame: CreateGame = (opts) => {
     player = new Player(city.playerSpawn.x, city.playerSpawn.y);
     playerCar = null;
     nearCar = null;
+    // Anti-trava recomeça do spawn — senão a recuperação teleporta para a
+    // última posição livre da corrida ANTERIOR (ponto arbitrário do mapa).
+    lastFreeX = player.x;
+    lastFreeY = player.y;
+    stuckT = 0;
     cars = [];
     // Tráfego civil (anel 240–800px: sempre tem carro passando perto do spawn).
     for (let i = 0; i < CIV_TRAFFIC; i++) {
@@ -535,12 +544,8 @@ export const createGame: CreateGame = (opts) => {
         if (!e.repeat) actionEdge = true;
         break;
       // ESC/M/R são da UI React (Game.tsx) — engine NÃO os escuta (evita duplo-toggle).
-      case 'KeyP':
-        if (!e.repeat) {
-          if (phase === 'playing') handle.pause();
-          else if (phase === 'paused') handle.resume();
-        }
-        break;
+      // Sem atalho P aqui: pausar pela engine furaria o countdown 3·2·1 da UI ao
+      // retomar (resume direto, sem a contagem).
     }
   }
 
@@ -1506,9 +1511,14 @@ export const createGame: CreateGame = (opts) => {
   window.addEventListener('resize', resize);
   window.addEventListener('blur', onBlur);
   const onMotionChange = (e: MediaQueryListEvent): void => {
-    reducedMotion = e.matches;
+    reducedMotion = readReducedMotionOverride() ?? e.matches;
   };
   reducedMotionMq.addEventListener('change', onMotionChange);
+  // Switch "Reduzir movimento" do menu de pausa (override manual).
+  const onReduceOverride = (): void => {
+    reducedMotion = prefersReducedMotion();
+  };
+  window.addEventListener(REDUCE_MOTION_EVENT, onReduceOverride);
 
   resize();
   resetRun();
@@ -1522,6 +1532,12 @@ export const createGame: CreateGame = (opts) => {
       hud.paused = true;
       hud.hint = null;
       hintMsg = null;
+      // Limpa o input: o keyup pode se perder com a janela desfocada (pause por
+      // blur) e o último toque fica congelado quando os TouchControls desmontam.
+      // Sem isso, ao retomar, o carro/jogador "anda sozinho".
+      keys.up = keys.down = keys.left = keys.right = keys.run = keys.brake = false;
+      touch.up = touch.down = touch.left = touch.right = touch.action = touch.brake = false;
+      actionEdge = false;
       audio.silence();
       pushHud(true);
     },
@@ -1597,6 +1613,7 @@ export const createGame: CreateGame = (opts) => {
       window.removeEventListener('resize', resize);
       window.removeEventListener('blur', onBlur);
       reducedMotionMq.removeEventListener('change', onMotionChange);
+      window.removeEventListener(REDUCE_MOTION_EVENT, onReduceOverride);
       audio.dispose();
     },
   };

@@ -27,6 +27,16 @@ const pt = {
     closeMenu: 'Fechar menu',
     drawerNote: 'Paródia não-oficial · sem fins lucrativos',
   },
+  radio: {
+    groupAria: 'Rádio — estações de música',
+    skipAria: 'Próxima música',
+    empty: 'sem faixas',
+    stations: {
+      eletronica: { label: 'ELE', name: 'Eletrônica', aria: 'Estação Eletrônica' },
+      rock: { label: 'ROK', name: 'Rock', aria: 'Estação Rock' },
+      synthwave: { label: 'SYN', name: 'Synthwave', aria: 'Estação Synthwave' },
+    },
+  },
   footer: {
     disclaimer:
       'GTA VI Mini — Edição de Fã é uma paródia não-oficial, sem fins lucrativos, feita por fãs. Não possui qualquer afiliação com Rockstar Games ou Take-Two Interactive. "Grand Theft Auto" e "GTA" são marcas registradas da Take-Two Interactive.',
@@ -331,7 +341,6 @@ const pt = {
     loading: 'Carregando a cidade…',
     canvasAria:
       'Tela do jogo GTA VI Mini. Use W A S D ou setas para se mover, E para entrar ou sair do carro, espaço para freio de mão, M para som e Esc para pausar.',
-    surrenderCause: 'se entregou à polícia',
     hud: {
       wanted: 'Procurado',
       time: 'TEMPO',
@@ -446,6 +455,16 @@ const en: Dict = {
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
     drawerNote: 'Unofficial parody · non-profit',
+  },
+  radio: {
+    groupAria: 'Radio — music stations',
+    skipAria: 'Next track',
+    empty: 'no tracks',
+    stations: {
+      eletronica: { label: 'ELE', name: 'Electronic', aria: 'Electronic station' },
+      rock: { label: 'ROK', name: 'Rock', aria: 'Rock station' },
+      synthwave: { label: 'SYN', name: 'Synthwave', aria: 'Synthwave station' },
+    },
   },
   footer: {
     disclaimer:
@@ -745,7 +764,6 @@ const en: Dict = {
     loading: 'Loading the city…',
     canvasAria:
       'GTA VI Mini game screen. Use W A S D or the arrow keys to move, E to enter or exit cars, space for the handbrake, M for sound and Esc to pause.',
-    surrenderCause: 'surrendered to the police',
     hud: {
       wanted: 'Wanted',
       time: 'TIME',

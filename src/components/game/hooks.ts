@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { prefersReducedMotion, REDUCE_MOTION_EVENT } from '@/game/util'
 
 /* ============================================================================
    Hooks e helpers compartilhados da UI do jogo
@@ -18,18 +19,20 @@ export function useCoarsePointer(): boolean {
   return coarse
 }
 
-/** true quando o usuário pediu redução de movimento */
+/** true quando o usuário pediu redução de movimento (override do pause ?? SO) */
 export function useReducedMotionPref(): boolean {
   const [reduce, setReduce] = useState<boolean>(
-    () =>
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    () => typeof window !== 'undefined' && prefersReducedMotion(),
   )
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const onChange = (e: MediaQueryListEvent) => setReduce(e.matches)
+    const onChange = () => setReduce(prefersReducedMotion())
     mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
+    window.addEventListener(REDUCE_MOTION_EVENT, onChange)
+    return () => {
+      mq.removeEventListener('change', onChange)
+      window.removeEventListener(REDUCE_MOTION_EVENT, onChange)
+    }
   }, [])
   return reduce
 }

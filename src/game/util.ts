@@ -86,6 +86,29 @@ export function storageGetInt(key: string, fallback: number): number {
   return Number.isFinite(v) ? v : fallback;
 }
 
+// ── Acessibilidade: "reduzir movimento" ──────────────────────────────────────
+// Override manual (switch do menu de pausa) tem prioridade sobre o matchMedia.
+
+export const REDUCE_MOTION_KEY = 'gtamini.cfg.reduzir-movimento'; // '1' | '0'
+/** Evento disparado na window quando o override muda — engine e hooks reagem. */
+export const REDUCE_MOTION_EVENT = 'gtamini:reduzir-movimento';
+
+/** Override salvo: true/false explícito, ou null (nunca tocado → vale o SO). */
+export function readReducedMotionOverride(): boolean | null {
+  const v = storageGet(REDUCE_MOTION_KEY, '');
+  if (v === '1') return true;
+  if (v === '0') return false;
+  return null;
+}
+
+/** Preferência efetiva de redução de movimento (override ?? media query). */
+export function prefersReducedMotion(): boolean {
+  return (
+    readReducedMotionOverride() ??
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
 /** Formata segundos como mm:ss (usado em toasts). */
 export function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);

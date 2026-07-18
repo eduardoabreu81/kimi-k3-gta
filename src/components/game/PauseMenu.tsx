@@ -5,6 +5,7 @@ import KeyCap from '@/components/KeyCap'
 import LangToggle from '@/components/LangToggle'
 import { Switch } from '@/components/ui/switch'
 import { useLang } from '@/i18n'
+import { REDUCE_MOTION_EVENT, REDUCE_MOTION_KEY } from '@/game/util'
 
 /* ============================================================================
    PauseMenu — game.md §6. Overlay fullscreen com blur, painel central
@@ -58,9 +59,7 @@ export default function PauseMenu({
   const navigate = useNavigate()
   const continueRef = useRef<HTMLButtonElement>(null)
   const [vibrate, setVibrate] = useState(() => readCfg('gtamini.cfg.vibracao', true))
-  const [reduceMotion, setReduceMotion] = useState(() =>
-    readCfg('gtamini.cfg.reduzir-movimento', false),
-  )
+  const [reduceMotion, setReduceMotion] = useState(() => readCfg(REDUCE_MOTION_KEY, false))
 
   /* foco inicial no botão primário ao abrir (game-over.md §1 — mesmo padrão) */
   useEffect(() => {
@@ -76,7 +75,9 @@ export default function PauseMenu({
   }
   const toggleReduceMotion = (v: boolean) => {
     setReduceMotion(v)
-    writeCfg('gtamini.cfg.reduzir-movimento', v)
+    writeCfg(REDUCE_MOTION_KEY, v)
+    // avisa engine (shake/flash) e hooks (animações) para reagir na hora
+    window.dispatchEvent(new Event(REDUCE_MOTION_EVENT))
   }
 
   return (

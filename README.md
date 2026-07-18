@@ -2,8 +2,9 @@
 
 A fan-made, browser-based mini-game inspired by the classic top-down GTA 1/2 era.
 Open night city, stealable cars with drift physics, a police wanted system (0–5 stars),
-**delivery missions**, pedestrians, minimap, full HUD, CRT mode, and 100% synthesized
-WebAudio sound — no installs, no downloads, straight from the browser.
+**delivery missions**, pedestrians, minimap, full HUD, CRT mode, a **GTA-style radio**
+for your own music, and 100% synthesized WebAudio SFX — no installs, straight from
+the browser.
 
 > **Unofficial, non-profit fan parody.** Not affiliated with Rockstar Games or Take-Two.
 > "Grand Theft Auto" and "GTA" are registered trademarks of Take-Two Interactive.
@@ -30,7 +31,10 @@ WebAudio sound — no installs, no downloads, straight from the browser.
 - 🌐 **EN / PT-BR** — one-click language toggle (English by default)
 - 📺 **CRT mode** — scanlines and vignette for that retro monitor feel
 - 🔊 **Procedural audio** — engine, sirens, pickups, crashes and UI, all synthesized
-  live via WebAudio (no audio files)
+  live via WebAudio (no SFX samples)
+- 📻 **GTA-style radio** — 3 stations (Electronic / Rock / Synthwave) with shuffle,
+  playing across the site and the game; drop your own tracks into
+  `src/assets/music/<station>/` — no code changes needed
 - 💾 **Persistent records** — best score, best time, and best cash saved locally
 
 ## Controls
@@ -63,6 +67,17 @@ npm run dev        # dev server
 npm run build      # outputs dist/
 npx vite preview   # serve the production build
 ```
+
+## Radio stations (your music)
+
+The floating radio widget (GTA style) has 3 stations — **ELE** (electronic),
+**ROK** (rock), **SYN** (synthwave) — and plays across the site and the game.
+To add music, drop audio files into `src/assets/music/<station>/`
+(`.mp3` / `.ogg` / `.wav` / `.m4a` / `.flac`) and rebuild — tracks are
+discovered at build time (`import.meta.glob`), shuffled without repeats, and
+the station choice persists in the browser. Click the active station to turn
+the radio off; stations with no files show up disabled. The game SFX mute
+(**M**) is independent of the radio.
 
 ## Deployment
 
