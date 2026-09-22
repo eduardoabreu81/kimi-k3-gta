@@ -99,3 +99,11 @@ sound, orchestrated as a multi-agent build. Project owner: [@eduardoabreu81](htt
 
 *This is a tribute project made by fans, for fun. If you like open-world crime games,
 go play the real thing — Rockstar earned it.*
+
+---
+
+<div align="center">
+
+**[☕ Ko-fi](https://ko-fi.com/eduardoabreu81)**
+
+</div>
